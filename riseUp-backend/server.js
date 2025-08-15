@@ -7,8 +7,16 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const jobRoutes = require('./routes/jobs');
+const savedPostsRoutes = require('./routes/savedPosts');
+const videosRoutes = require('./routes/videos');
+
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/jobs', jobRoutes);
+app.use('/api/savedPosts', savedPostsRoutes);
+app.use('/api/videos', videosRoutes);
 
 app.get('/test', (req, res) => {
   res.json({ message: "Backend server is working!" });
