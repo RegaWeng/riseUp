@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useAuth } from "../context/AuthContext";
 import { useSaved } from "../context/SavedContext";
 import { useTabContext } from "./_layout";
 
@@ -45,6 +46,9 @@ export default function ProfileScreen() {
     appliedJobs, 
     getCompletedVideosWithDetails 
   } = useSaved();
+
+  // Get auth data
+  const { user } = useAuth();
 
   // Use tab context to update header color
   const { setActiveTab } = useTabContext();
@@ -187,11 +191,15 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Status Section */}
+      {/* Status Section - Small like home page */}
       <View style={styles.statusSection}>
         <View style={styles.statusContent}>
           <View style={styles.statusText}>
             <Text style={styles.subtitle}>Your professional resume</Text>
+            <Text style={styles.stats}>
+              {uniqueTrainingSkills.length + selectedSelfTaughtSkills.length} skills • {completedVideos.length} training completed
+              {user && ` • ${user.type.charAt(0).toUpperCase() + user.type.slice(1)} Account`}
+            </Text>
           </View>
           <TouchableOpacity
             style={styles.editButton}
@@ -204,6 +212,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {/* Large scrollable content area like home page */}
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Profile Picture & Basic Info */}
         <View style={styles.profileSection}>
@@ -568,10 +577,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   statusSection: {
-    backgroundColor: '#5856D6',
     paddingTop: 20,
-    paddingBottom: 20,
     paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   statusContent: {
     flexDirection: 'row',
@@ -583,18 +591,19 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: 'white',
-    opacity: 0.9,
     fontWeight: '600',
-    marginBottom: 8,
+    color: '#333',
+    marginBottom: 5,
+  },
+  stats: {
+    fontSize: 14,
+    color: '#666',
   },
   editButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#5856D6',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
   editButtonText: {
     color: 'white',

@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { Tabs } from 'expo-router';
 import { createContext, ReactNode, useContext, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { SavedProvider } from '../context/SavedContext';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 
 // Tab colors mapping
 const TAB_COLORS = {
@@ -42,6 +42,7 @@ const TabProvider = ({ children }: { children: ReactNode }) => {
 // Custom header component with dynamic colors
 const CustomHeader = () => {
   const { activeTab } = useTabContext();
+  const { user, logout } = useAuth();
   const [fontsLoaded] = useFonts({
     'SpaceMono': require('../../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -52,6 +53,11 @@ const CustomHeader = () => {
     return (
       <View style={[styles.headerContainer, { backgroundColor: headerColor }]}>
         <Text style={styles.headerTitle}>Rise Up</Text>
+        {user && (
+          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
@@ -59,6 +65,11 @@ const CustomHeader = () => {
   return (
     <View style={[styles.headerContainer, { backgroundColor: headerColor }]}>
       <Text style={[styles.headerTitle, { fontFamily: 'SpaceMono' }]}>Rise Up</Text>
+      {user && (
+        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -66,8 +77,7 @@ const CustomHeader = () => {
 export default function TabLayout() {
   return (
     <TabProvider>
-      <SavedProvider>
-        <Tabs
+      <Tabs
           screenOptions={{
             tabBarActiveTintColor: '#007AFF',
             tabBarInactiveTintColor: '#8E8E93',
@@ -127,7 +137,6 @@ export default function TabLayout() {
             }}
             />
         </Tabs>
-      </SavedProvider>
     </TabProvider>
   );
 }
@@ -143,11 +152,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
     letterSpacing: 1,
+    flex: 1,
+    textAlign: 'center',
+  },
+  logoutButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  logoutButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 }); 

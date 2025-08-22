@@ -180,17 +180,15 @@ export default function SavedScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Status Section */}
+      {/* Status Section - Small like home page */}
       <View style={styles.statusSection}>
         <Text style={styles.subtitle}>Your bookmarked jobs and training</Text>
-        {(savedJobs.length > 0 || savedVideos.length > 0) && (
-          <Text style={styles.totalCount}>
-            📌 {savedJobs.length + savedVideos.length} items saved
-          </Text>
-        )}
+        <Text style={styles.stats}>
+          📌 {savedJobs.length + savedVideos.length} items saved
+        </Text>
       </View>
 
-      {/* Content */}
+      {/* Large scrollable content area like home page */}
       <SectionList
         sections={sectionData}
         keyExtractor={(item) => `${item.type}-${item.id}`}
@@ -228,27 +226,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   statusSection: {
-    backgroundColor: '#FF9500',
     paddingTop: 20,
-    paddingBottom: 20,
     paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   subtitle: {
     fontSize: 18,
-    color: 'white',
-    opacity: 0.9,
     fontWeight: '600',
-    marginBottom: 8,
+    color: '#333',
+    marginBottom: 5,
   },
-  totalCount: {
+  stats: {
     fontSize: 14,
-    color: 'white',
-    marginTop: 8,
-    opacity: 0.9,
+    color: '#666',
   },
   contentContainer: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 20,
   },
   sectionHeader: {
     backgroundColor: '#f5f5f5',

@@ -83,16 +83,7 @@ export default function TrainingScreen() {
     }
   };
 
-  // Simple progress circle (text-based for now)
-  const renderProgressCircle = () => (
-    <View style={styles.progressCircle}>
-      <Text style={styles.progressPercentage}>{progressPercentage}%</Text>
-      <Text style={styles.progressLabel}>Complete</Text>
-      <Text style={styles.progressCount}>
-        {completedCount} of {totalVideos} videos
-      </Text>
-    </View>
-  );
+
 
   // Render category filter buttons
   const renderCategoryFilter = () => (
@@ -191,47 +182,33 @@ export default function TrainingScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Status Section */}
+      {/* Status Section - Small like home page */}
       <View style={styles.statusSection}>
         <Text style={styles.subtitle}>Build skills for better opportunities</Text>
-        {savedVideos.length > 0 && (
-          <Text style={styles.savedCount}>
-            ⭐ {savedVideos.length} video{savedVideos.length !== 1 ? 's' : ''} saved
-          </Text>
-        )}
+        <Text style={styles.stats}>
+          {progressPercentage}% complete • {completedCount} of {totalVideos} videos
+          {savedVideos.length > 0 && ` • ⭐ ${savedVideos.length} saved`}
+        </Text>
       </View>
 
-      {/* Progress Section */}
-      <View style={styles.progressSection}>
-        {renderProgressCircle()}
-        <View style={styles.progressText}>
-          <Text style={styles.progressTitle}>Your Progress</Text>
-          <Text style={styles.progressSubtitle}>
-            Keep learning to unlock better job opportunities!
-          </Text>
-        </View>
-      </View>
-
-      {/* Category Filter */}
+      {/* Category Filter - Small section like search bar */}
       <View style={styles.filterSection}>
-        <Text style={styles.filterTitle}>Choose a skill category:</Text>
         {renderCategoryFilter()}
       </View>
 
-      {/* Video List */}
-      <View style={styles.videoSection}>
-        <Text style={styles.videoSectionTitle}>
-          {selectedCategory === 'All' ? 'All Training Videos' : `${selectedCategory} Training`} ({filteredVideos.length})
-        </Text>
-        
-        <FlatList
-          data={filteredVideos}
-          renderItem={renderVideoItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.videoList}
-        />
-      </View>
+      {/* Video List - Large scrollable area like home page */}
+      <FlatList
+        data={filteredVideos}
+        renderItem={renderVideoItem}
+        keyExtractor={(item) => item.id}
+        style={styles.videoList}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <Text style={styles.videoSectionTitle}>
+            {selectedCategory === 'All' ? 'All Training Videos' : `${selectedCategory} Training`} ({filteredVideos.length})
+          </Text>
+        }
+      />
     </View>
   );
 }
@@ -242,84 +219,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   statusSection: {
-    backgroundColor: '#34C759',
     paddingTop: 20,
-    paddingBottom: 20,
     paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   subtitle: {
     fontSize: 18,
-    color: 'white',
-    opacity: 0.9,
     fontWeight: '600',
-    marginBottom: 8,
-  },
-  savedCount: {
-    fontSize: 14,
-    color: 'white',
-    marginTop: 8,
-    opacity: 0.9,
-  },
-  progressSection: {
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 12,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  progressCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#34C759',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  progressPercentage: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  progressLabel: {
-    fontSize: 10,
-    color: 'white',
-    opacity: 0.8,
-  },
-  progressCount: {
-    fontSize: 8,
-    color: 'white',
-    opacity: 0.8,
-  },
-  progressText: {
-    flex: 1,
-  },
-  progressTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
-  progressSubtitle: {
+  stats: {
     fontSize: 14,
     color: '#666',
-    lineHeight: 20,
   },
+
   filterSection: {
     paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  filterTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
+    paddingBottom: 15,
   },
   categoryContainer: {
     flexDirection: 'row',
@@ -345,7 +262,7 @@ const styles = StyleSheet.create({
   categoryButtonTextActive: {
     color: 'white',
   },
-  videoSection: {
+  videoList: {
     flex: 1,
     paddingHorizontal: 20,
   },
@@ -354,9 +271,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
-  },
-  videoList: {
-    paddingBottom: 20,
+    marginTop: 10,
   },
   videoCard: {
     backgroundColor: 'white',
