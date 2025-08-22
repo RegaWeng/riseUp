@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import { createContext, ReactNode, useContext, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
@@ -49,12 +49,17 @@ const CustomHeader = () => {
 
   const headerColor = TAB_COLORS[activeTab];
 
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
+  };
+
   if (!fontsLoaded) {
     return (
       <View style={[styles.headerContainer, { backgroundColor: headerColor }]}>
         <Text style={styles.headerTitle}>Rise Up</Text>
         {user && (
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
         )}
@@ -66,7 +71,7 @@ const CustomHeader = () => {
     <View style={[styles.headerContainer, { backgroundColor: headerColor }]}>
       <Text style={[styles.headerTitle, { fontFamily: 'SpaceMono' }]}>Rise Up</Text>
       {user && (
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       )}

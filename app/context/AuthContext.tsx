@@ -76,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
+    // In a real app, you might also clear AsyncStorage or other persistent data here
   };
 
   return (

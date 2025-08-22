@@ -33,12 +33,6 @@ export default function LoginScreen() {
       description: 'Post jobs and manage applications',
       color: '#007AFF',
     },
-    {
-      type: 'admin',
-      label: 'Admin',
-      description: 'Manage platform and users',
-      color: '#5856D6',
-    },
   ];
 
   const handleLogin = async () => {
@@ -57,8 +51,6 @@ export default function LoginScreen() {
 
   const getSampleCredentials = () => {
     switch (selectedUserType) {
-      case 'admin':
-        return { email: 'admin@riseup.com', password: 'admin123' };
       case 'employer':
         return { email: 'employer@company.com', password: 'employer123' };
       case 'user':
@@ -151,10 +143,17 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Sample Credentials Button */}
-          <TouchableOpacity style={styles.sampleButton} onPress={fillSampleCredentials}>
-            <Text style={styles.sampleButtonText}>Fill Sample Credentials</Text>
-          </TouchableOpacity>
+                     {/* Sample Credentials Button */}
+           <TouchableOpacity style={styles.sampleButton} onPress={fillSampleCredentials}>
+             <Text style={styles.sampleButtonText}>Fill Sample Credentials</Text>
+           </TouchableOpacity>
+
+           {/* Admin Login Note */}
+           <View style={styles.adminNote}>
+             <Text style={styles.adminNoteText}>
+               💡 Admin accounts are created through backend only for security.
+             </Text>
+           </View>
 
           {/* Login Button */}
           <TouchableOpacity
@@ -297,10 +296,24 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     paddingTop: 20,
   },
-  footerText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+     footerText: {
+     fontSize: 14,
+     color: '#666',
+     textAlign: 'center',
+     lineHeight: 20,
+   },
+   adminNote: {
+     backgroundColor: '#f0f8ff',
+     padding: 12,
+     borderRadius: 8,
+     marginBottom: 20,
+     borderLeftWidth: 4,
+     borderLeftColor: '#007AFF',
+   },
+   adminNoteText: {
+     fontSize: 12,
+     color: '#007AFF',
+     textAlign: 'center',
+     lineHeight: 16,
+   },
 });
