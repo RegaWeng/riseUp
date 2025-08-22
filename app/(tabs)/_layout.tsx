@@ -183,6 +183,7 @@ export default function TabLayout() {
     return (
       <TabProvider>
         <Tabs
+          initialRouteName="employer-home"
           screenOptions={{
             tabBarActiveTintColor: '#007AFF',
             tabBarInactiveTintColor: '#8E8E93',

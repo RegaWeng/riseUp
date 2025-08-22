@@ -1,18 +1,18 @@
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useAuth, UserType } from './context/AuthContext';
-import { router } from 'expo-router';
+import { useAuth } from './context/AuthContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -28,7 +28,10 @@ export default function LoginScreen() {
     try {
       const success = await login(email, password);
       if (success) {
-        router.replace('/(tabs)');
+        // Small delay to ensure user context is updated
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 100);
       } else {
         Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
       }

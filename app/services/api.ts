@@ -4,7 +4,7 @@ const API_BASE_URL =
   Platform.select({
     ios: 'http://localhost:3000/api',           // iOS Simulator
     android: 'http://10.0.2.2:3000/api',        // Android Emulator
-    default: 'http://192.168.0.1:3000/api',  // Real device - replace with your PC IP
+    default: 'http://192.168.0.207:3000/api',  // Real device - replace with your PC IP
   })!;
 
 // Types
