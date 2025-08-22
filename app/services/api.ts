@@ -1,203 +1,236 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+import { Platform } from 'react-native';
 
-// Job API functions
-export const jobAPI = {
-  // Get all jobs
-  getAllJobs: async () => {
+const API_BASE_URL =
+  Platform.select({
+    ios: 'http://localhost:3000/api',           // iOS Simulator
+    android: 'http://10.0.2.2:3000/api',        // Android Emulator
+    default: 'http://192.168.0.1:3000/api',  // Real device - replace with your PC IP
+  })!;
+
+// Types
+export interface Job {
+  _id: string;
+  title: string;
+  company: string;
+  jobType: string;
+  location: string;
+  workingHours: {
+    weekday: string;
+    weekend: string;
+  };
+  learnableSkills: string[];
+  minimumSalary: string;
+  experienceRequired?: string;
+  trainingProvided?: string;
+  requiredSkills: string[];
+  datePosted: string;
+  isActive: boolean;
+}
+
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  type: 'user' | 'employer' | 'admin';
+  createdAt: string;
+}
+
+export interface Application {
+  _id: string;
+  jobId: string;
+  userId: string;
+  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected';
+  appliedDate: string;
+  user: User;
+  job: Job;
+}
+
+export interface CreateJobRequest {
+  title: string;
+  company: string;
+  jobType: string;
+  location: string;
+  workingHours: {
+    weekday: string;
+    weekend: string;
+  };
+  learnableSkills?: string[];
+  minimumSalary: string;
+  experienceRequired?: string;
+  trainingProvided?: string;
+  requiredSkills: string[];
+}
+
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  type: 'user' | 'employer';
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+// API Service Class
+class ApiService {
+  private baseURL: string;
+  private token: string | null = null;
+
+  constructor() {
+    this.baseURL = API_BASE_URL;
+  }
+
+  setToken(token: string) {
+    this.token = token;
+  }
+
+  clearToken() {
+    this.token = null;
+  }
+
+  // Generic request method
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Add authorization header if token exists
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const config: RequestInit = {
+      headers,
+      ...options,
+    };
+
     try {
-      const response = await fetch(`${API_BASE_URL}/jobs`);
-      const data = await response.json();
-      return data;
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      console.error('API request failed:', error);
       throw error;
     }
-  },
+  }
 
-  // Get single job
-  getJob: async (id: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/jobs/${id}`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching job:', error);
-      throw error;
-    }
-  },
+  // Jobs API
+  async getJobs(): Promise<Job[]> {
+    return this.request<Job[]>('/jobs');
+  }
 
-  // Create new job
-  createJob: async (jobData: any) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/jobs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(jobData),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error creating job:', error);
-      throw error;
-    }
-  },
+  async getJob(id: string): Promise<Job> {
+    return this.request<Job>(`/jobs/${id}`);
+  }
 
-  // Update job
-  updateJob: async (id: string, jobData: any) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/jobs/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(jobData),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error updating job:', error);
-      throw error;
-    }
-  },
+  async createJob(jobData: CreateJobRequest): Promise<Job> {
+    return this.request<Job>('/jobs', {
+      method: 'POST',
+      body: JSON.stringify(jobData),
+    });
+  }
 
-  // Delete job
-  deleteJob: async (id: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/jobs/${id}`, {
-        method: 'DELETE',
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error deleting job:', error);
-      throw error;
-    }
-  },
+  async updateJob(id: string, jobData: Partial<CreateJobRequest>): Promise<Job> {
+    return this.request<Job>(`/jobs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(jobData),
+    });
+  }
 
-  // Search jobs by company
-  searchJobsByCompany: async (company: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/jobs/search/company/${company}`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error searching jobs by company:', error);
-      throw error;
-    }
-  },
+  async deleteJob(id: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/jobs/${id}`, {
+      method: 'DELETE',
+    });
+  }
 
-  // Search jobs by location
-  searchJobsByLocation: async (location: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/jobs/search/location/${location}`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error searching jobs by location:', error);
-      throw error;
-    }
-  },
-};
+  async searchJobsByCompany(company: string): Promise<Job[]> {
+    return this.request<Job[]>(`/jobs/search/company/${encodeURIComponent(company)}`);
+  }
 
-// Video API functions
-export const videoAPI = {
-  // Get all videos
-  getAllVideos: async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/videos`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching videos:', error);
-      throw error;
-    }
-  },
+  async searchJobsByLocation(location: string): Promise<Job[]> {
+    return this.request<Job[]>(`/jobs/search/location/${encodeURIComponent(location)}`);
+  }
 
-  // Get single video
-  getVideo: async (id: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/videos/${id}`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching video:', error);
-      throw error;
-    }
-  },
+  // Users API
+  async register(userData: CreateUserRequest): Promise<User> {
+    return this.request<User>('/users/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
 
-  // Create new video
-  createVideo: async (videoData: any) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/videos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(videoData),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error creating video:', error);
-      throw error;
-    }
-  },
+  async login(credentials: LoginRequest): Promise<{ user: User; token: string }> {
+    return this.request<{ user: User; token: string }>('/users/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  }
 
-  // Update video
-  updateVideo: async (id: string, videoData: any) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(videoData),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error updating video:', error);
-      throw error;
-    }
-  },
+  async getCurrentUser(): Promise<User> {
+    return this.request<User>('/users/me');
+  }
 
-  // Delete video
-  deleteVideo: async (id: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
-        method: 'DELETE',
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error deleting video:', error);
-      throw error;
-    }
-  },
+  // Applications API
+  async getApplications(): Promise<Application[]> {
+    return this.request<Application[]>('/applications');
+  }
 
-  // Search videos by category
-  searchVideosByCategory: async (category: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/videos/search/category/${category}`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error searching videos by category:', error);
-      throw error;
-    }
-  },
+  async createApplication(jobId: string): Promise<Application> {
+    return this.request<Application>('/applications', {
+      method: 'POST',
+      body: JSON.stringify({ jobId }),
+    });
+  }
 
-  // Search videos by skills
-  searchVideosBySkills: async (skill: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/videos/search/skills/${skill}`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error searching videos by skills:', error);
-      throw error;
-    }
-  },
-};
+  async updateApplicationStatus(
+    applicationId: string,
+    status: Application['status']
+  ): Promise<Application> {
+    return this.request<Application>(`/applications/${applicationId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Saved Posts API
+  async getSavedPosts(): Promise<any[]> {
+    return this.request<any[]>('/savedPosts');
+  }
+
+  async savePost(postData: any): Promise<any> {
+    return this.request<any>('/savedPosts', {
+      method: 'POST',
+      body: JSON.stringify(postData),
+    });
+  }
+
+  async removeSavedPost(id: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/savedPosts/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Videos API
+  async getVideos(): Promise<any[]> {
+    return this.request<any[]>('/videos');
+  }
+
+  // Test connection
+  async testConnection(): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/test');
+  }
+}
+
+export const apiService = new ApiService();

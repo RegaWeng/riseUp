@@ -22,6 +22,8 @@ export default function RegisterScreen() {
   const [selectedUserType, setSelectedUserType] = useState<UserType>('user');
   const [isLoading, setIsLoading] = useState(false);
 
+  const { register } = useAuth();
+
   const userTypes: { type: UserType; label: string; description: string; color: string }[] = [
     {
       type: 'user',
@@ -55,20 +57,20 @@ export default function RegisterScreen() {
 
     setIsLoading(true);
     
-    // Simulate registration process
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // In a real app, this would call your registration API
-    Alert.alert(
-      'Registration Successful!',
-      `Welcome ${name}! Your ${selectedUserType === 'user' ? 'Job Seeker' : 'Employer'} account has been created.`,
-      [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/login'),
-        },
-      ]
-    );
+    try {
+      const success = await register(name, email, password, selectedUserType);
+      if (success) {
+        Alert.alert(
+          'Registration Successful!',
+          `Welcome ${name}! Your ${selectedUserType === 'user' ? 'Job Seeker' : 'Employer'} account has been created.`,
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+        );
+      } else {
+        Alert.alert('Registration Failed', 'Please try again or contact support.');
+      }
+    } catch (error) {
+      Alert.alert('Registration Failed', 'Network error. Please check your connection.');
+    }
     
     setIsLoading(false);
   };

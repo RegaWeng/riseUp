@@ -25,19 +25,15 @@ export default function LoginScreen() {
       return;
     }
 
-    // Try to login as user first, then employer
-    let success = await login(email, password, 'user');
-    if (!success) {
-      success = await login(email, password, 'employer');
-    }
-    if (!success) {
-      success = await login(email, password, 'admin');
-    }
-    
-    if (success) {
-      router.replace('/(tabs)');
-    } else {
-      Alert.alert('Login Failed', 'Invalid credentials. Please try again.');
+    try {
+      const success = await login(email, password);
+      if (success) {
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Login Failed', 'Network error. Please check your connection.');
     }
   };
 
