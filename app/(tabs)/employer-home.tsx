@@ -45,7 +45,7 @@ export default function EmployerHomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      setActiveTab('index');
+      setActiveTab('employer-home');
     }, [setActiveTab])
   );
 

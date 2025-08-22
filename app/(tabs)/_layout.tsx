@@ -11,6 +11,9 @@ const TAB_COLORS = {
   training: '#34C759',   // Training - Green
   saved: '#FF9500',      // Saved - Orange
   profile: '#5856D6',    // Profile - Purple
+  'employer-home': '#007AFF',      // Jobs - Blue
+  'employer-applicants': '#34C759', // Applicants - Green
+  'employer-saved': '#FF9500',      // Starred - Orange
 };
 
 // Context for tracking active tab
@@ -30,7 +33,10 @@ export const useTabContext = () => {
 };
 
 const TabProvider = ({ children }: { children: ReactNode }) => {
-  const [activeTab, setActiveTab] = useState<keyof typeof TAB_COLORS>('index');
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<keyof typeof TAB_COLORS>(
+    user?.type === 'employer' ? 'employer-home' : 'index'
+  );
   
   return (
     <TabContext.Provider value={{ activeTab, setActiveTab }}>
@@ -80,16 +86,21 @@ const CustomHeader = () => {
 };
 
 export default function TabLayout() {
-  return (
-    <TabProvider>
-      <Tabs
+  const { user } = useAuth();
+
+  // Show different tabs based on user type
+  if (user?.type === 'admin') {
+    return (
+      <TabProvider>
+        <Tabs
           screenOptions={{
             tabBarActiveTintColor: '#007AFF',
             tabBarInactiveTintColor: '#8E8E93',
-            headerShown: true, // Show the header
-            header: () => <CustomHeader />, // Use our custom header
+            headerShown: true,
+            header: () => <CustomHeader />,
           }}
         >
+          {/* User tabs */}
           <Tabs.Screen
             name="index"
             options={{
@@ -126,6 +137,34 @@ export default function TabLayout() {
               ),
             }}
           />
+          {/* Employer tabs */}
+          <Tabs.Screen
+            name="employer-home"
+            options={{
+              title: 'Jobs',
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={24} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="employer-applicants"
+            options={{
+              title: 'Applicants',
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'people' : 'people-outline'} size={24} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="employer-saved"
+            options={{
+              title: 'Starred',
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'star' : 'star-outline'} size={24} color={color} />
+              ),
+            }}
+          />
           <Tabs.Screen
             name="profile"
             options={{
@@ -135,13 +174,164 @@ export default function TabLayout() {
               ),
             }}
           />
-          <Tabs.Screen
-            name="vibration"
-            options={{
-              title: 'Vibration'
-            }}
-            />
         </Tabs>
+      </TabProvider>
+    );
+  }
+
+  if (user?.type === 'employer') {
+    return (
+      <TabProvider>
+        <Tabs
+          screenOptions={{
+            tabBarActiveTintColor: '#007AFF',
+            tabBarInactiveTintColor: '#8E8E93',
+            headerShown: true,
+            header: () => <CustomHeader />,
+          }}
+        >
+          <Tabs.Screen
+            name="employer-home"
+            options={{
+              title: 'Jobs',
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={24} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="employer-applicants"
+            options={{
+              title: 'Applicants',
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'people' : 'people-outline'} size={24} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="employer-saved"
+            options={{
+              title: 'Starred',
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'star' : 'star-outline'} size={24} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: 'Profile',
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+              ),
+            }}
+          />
+          {/* Hide user-specific tabs from employer */}
+          <Tabs.Screen
+            name="index"
+            options={{
+              href: null, // This hides the tab
+            }}
+          />
+          <Tabs.Screen
+            name="training"
+            options={{
+              href: null, // This hides the tab
+            }}
+          />
+          <Tabs.Screen
+            name="saved"
+            options={{
+              href: null, // This hides the tab
+            }}
+          />
+          <Tabs.Screen
+            name="location"
+            options={{
+              href: null, // This hides the tab
+            }}
+          />
+        </Tabs>
+      </TabProvider>
+    );
+  }
+
+  // Default user tabs
+  return (
+    <TabProvider>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: '#007AFF',
+          tabBarInactiveTintColor: '#8E8E93',
+          headerShown: true,
+          header: () => <CustomHeader />,
+        }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="training"
+          options={{
+            title: 'Training',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'school' : 'school-outline'} size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="saved"
+          options={{
+            title: 'Saved',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'bookmark' : 'bookmark-outline'} size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="location"
+          options={{
+            title: 'Location',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'location' : 'location-outline'} size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+            ),
+          }}
+        />
+        {/* Hide employer-specific tabs from user */}
+        <Tabs.Screen
+          name="employer-home"
+          options={{
+            href: null, // This hides the tab
+          }}
+        />
+        <Tabs.Screen
+          name="employer-applicants"
+          options={{
+            href: null, // This hides the tab
+          }}
+        />
+        <Tabs.Screen
+          name="employer-saved"
+          options={{
+            href: null, // This hides the tab
+          }}
+        />
+      </Tabs>
     </TabProvider>
   );
 }

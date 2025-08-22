@@ -17,23 +17,7 @@ import { router } from 'expo-router';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedUserType, setSelectedUserType] = useState<UserType>('user');
   const { login, isLoading } = useAuth();
-
-  const userTypes: { type: UserType; label: string; description: string; color: string }[] = [
-    {
-      type: 'user',
-      label: 'Job Seeker',
-      description: 'Find jobs and training opportunities',
-      color: '#34C759',
-    },
-    {
-      type: 'employer',
-      label: 'Employer',
-      description: 'Post jobs and manage applications',
-      color: '#007AFF',
-    },
-  ];
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -41,7 +25,15 @@ export default function LoginScreen() {
       return;
     }
 
-    const success = await login(email, password, selectedUserType);
+    // Try to login as user first, then employer
+    let success = await login(email, password, 'user');
+    if (!success) {
+      success = await login(email, password, 'employer');
+    }
+    if (!success) {
+      success = await login(email, password, 'admin');
+    }
+    
     if (success) {
       router.replace('/(tabs)');
     } else {
@@ -49,19 +41,9 @@ export default function LoginScreen() {
     }
   };
 
-  const getSampleCredentials = () => {
-    switch (selectedUserType) {
-      case 'employer':
-        return { email: 'employer@company.com', password: 'employer123' };
-      case 'user':
-        return { email: 'user@example.com', password: 'user123' };
-    }
-  };
-
   const fillSampleCredentials = () => {
-    const credentials = getSampleCredentials();
-    setEmail(credentials.email);
-    setPassword(credentials.password);
+    setEmail('user@example.com');
+    setPassword('user123');
   };
 
   return (
@@ -76,42 +58,7 @@ export default function LoginScreen() {
           <Text style={styles.subtitle}>Your journey to better opportunities starts here</Text>
         </View>
 
-        {/* Account Type Selection */}
-        <View style={styles.accountTypeSection}>
-          <Text style={styles.sectionTitle}>Choose your account type:</Text>
-          <View style={styles.accountTypeContainer}>
-            {userTypes.map((userType) => (
-              <TouchableOpacity
-                key={userType.type}
-                style={[
-                  styles.accountTypeButton,
-                  selectedUserType === userType.type && {
-                    backgroundColor: userType.color,
-                    borderColor: userType.color,
-                  },
-                ]}
-                onPress={() => setSelectedUserType(userType.type)}
-              >
-                <Text
-                  style={[
-                    styles.accountTypeLabel,
-                    selectedUserType === userType.type && styles.selectedAccountTypeLabel,
-                  ]}
-                >
-                  {userType.label}
-                </Text>
-                <Text
-                  style={[
-                    styles.accountTypeDescription,
-                    selectedUserType === userType.type && styles.selectedAccountTypeDescription,
-                  ]}
-                >
-                  {userType.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        
 
         {/* Login Form */}
         <View style={styles.formSection}>
@@ -143,34 +90,35 @@ export default function LoginScreen() {
             />
           </View>
 
-                     {/* Sample Credentials Button */}
+                                {/* Sample Credentials Button */}
            <TouchableOpacity style={styles.sampleButton} onPress={fillSampleCredentials}>
              <Text style={styles.sampleButtonText}>Fill Sample Credentials</Text>
            </TouchableOpacity>
 
-           {/* Admin Login Note */}
-           <View style={styles.adminNote}>
-             <Text style={styles.adminNoteText}>
-               💡 Admin accounts are created through backend only for security.
-             </Text>
-           </View>
+           {/* Login Button */}
+           <TouchableOpacity
+             style={[
+               styles.loginButton,
+               { backgroundColor: '#007AFF' },
+               isLoading && styles.loginButtonDisabled,
+             ]}
+             onPress={handleLogin}
+             disabled={isLoading}
+           >
+             {isLoading ? (
+               <ActivityIndicator color="white" />
+             ) : (
+               <Text style={styles.loginButtonText}>Sign In</Text>
+             )}
+           </TouchableOpacity>
 
-          {/* Login Button */}
-          <TouchableOpacity
-            style={[
-              styles.loginButton,
-              { backgroundColor: userTypes.find(t => t.type === selectedUserType)?.color },
-              isLoading && styles.loginButtonDisabled,
-            ]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.loginButtonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
+           {/* Register Button */}
+           <TouchableOpacity
+             style={styles.registerButton}
+             onPress={() => router.push('/register')}
+           >
+             <Text style={styles.registerButtonText}>Create New Account</Text>
+           </TouchableOpacity>
         </View>
 
         {/* Footer */}
@@ -302,18 +250,18 @@ const styles = StyleSheet.create({
      textAlign: 'center',
      lineHeight: 20,
    },
-   adminNote: {
-     backgroundColor: '#f0f8ff',
-     padding: 12,
-     borderRadius: 8,
+   registerButton: {
+     backgroundColor: 'transparent',
+     padding: 16,
+     borderRadius: 12,
+     alignItems: 'center',
      marginBottom: 20,
-     borderLeftWidth: 4,
-     borderLeftColor: '#007AFF',
+     borderWidth: 2,
+     borderColor: '#007AFF',
    },
-   adminNoteText: {
-     fontSize: 12,
+   registerButtonText: {
      color: '#007AFF',
-     textAlign: 'center',
-     lineHeight: 16,
+     fontSize: 16,
+     fontWeight: 'bold',
    },
 });
