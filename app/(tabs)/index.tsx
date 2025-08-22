@@ -1,8 +1,9 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useSaved } from "../context/SavedContext";
-import { useTabContext } from "./_layout";
+import { useSaved } from '../context/SavedContext';
+import { useTabContext } from './_layout';
+
 
 // Sample job data - this would come from an API later
 const SAMPLE_JOBS = [

@@ -259,4 +259,7 @@ export const useSaved = () => {
     throw new Error('useSaved must be used within a SavedProvider');
   }
   return context;
-}; 
+};
+
+// Default export for Expo Router
+export default SavedProvider; 
