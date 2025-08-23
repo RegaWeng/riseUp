@@ -1,8 +1,7 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { useTabContext } from "./_layout";
+
 
 // Sample applicants data
 const SAMPLE_APPLICANTS = [
@@ -46,13 +45,9 @@ export default function EmployerApplicantsScreen() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   
   const { user } = useAuth();
-  const { setActiveTab } = useTabContext();
 
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab('employer-applicants');
-    }, [setActiveTab])
-  );
+
+
 
   const filteredApplicants = selectedFilter === 'all' 
     ? applicants 

@@ -1,8 +1,7 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { TRAINING_DATA, useSaved } from "../context/SavedContext";
-import { useTabContext } from "./_layout";
+
 
 const SKILL_CATEGORIES = [
   { name: 'Customer Service', color: '#007AFF', count: 2 },
@@ -27,14 +26,10 @@ export default function TrainingScreen() {
   } = useSaved();
 
   // Use tab context to update header color
-  const { setActiveTab } = useTabContext();
+
 
   // Set active tab when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab('training');
-    }, [setActiveTab])
-  );
+
 
   // Filter videos by selected category
   const filteredVideos = selectedCategory === 'All' 
@@ -164,6 +159,7 @@ export default function TrainingScreen() {
       </View>
       
       <TouchableOpacity
+      
         style={[
           styles.watchButton,
           isVideoCompleted(item.id) && styles.completedButton

@@ -1,8 +1,7 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSaved } from '../context/SavedContext';
-import { useTabContext } from './_layout';
+
 
 
 // Sample job data - this would come from an API later
@@ -66,14 +65,9 @@ export default function HomeScreen() {
   } = useSaved();
 
   // Use tab context to update header color
-  const { setActiveTab } = useTabContext();
 
-  // Set active tab when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab('index');
-    }, [setActiveTab])
-  );
+
+
   
   // Filter jobs based on search text and exclude removed jobs
   const filteredJobs = SAMPLE_JOBS.filter(job => 

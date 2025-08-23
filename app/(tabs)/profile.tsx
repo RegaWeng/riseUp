@@ -1,9 +1,8 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useSaved } from "../context/SavedContext";
-import { useTabContext } from "./_layout";
+
 
 // User profile data - in a real app, this would come from user authentication/profile
 const USER_PROFILE = {
@@ -51,14 +50,10 @@ export default function ProfileScreen() {
   const { user } = useAuth();
 
   // Use tab context to update header color
-  const { setActiveTab } = useTabContext();
+
 
   // Set active tab when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab('profile');
-    }, [setActiveTab])
-  );
+
 
   // Get real completed training videos with their details
   const completedTrainingVideos = getCompletedVideosWithDetails();

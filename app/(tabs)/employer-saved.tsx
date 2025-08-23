@@ -1,8 +1,7 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { useTabContext } from "./_layout";
+
 
 // Sample starred candidates data
 const SAMPLE_STARRED_CANDIDATES = [
@@ -34,13 +33,9 @@ export default function EmployerSavedScreen() {
   const [starredCandidates, setStarredCandidates] = useState(SAMPLE_STARRED_CANDIDATES);
   
   const { user } = useAuth();
-  const { setActiveTab } = useTabContext();
 
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab('employer-saved');
-    }, [setActiveTab])
-  );
+
+
 
   const handleRemoveFromStarred = (candidateId: string, candidateName: string) => {
     setStarredCandidates(prev => prev.filter(candidate => candidate.id !== candidateId));

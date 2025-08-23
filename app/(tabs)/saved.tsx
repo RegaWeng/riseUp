@@ -1,8 +1,6 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSaved } from "../context/SavedContext";
-import { useTabContext } from "./_layout";
+
 
 export default function SavedScreen() {
   // Use shared context for everything
@@ -19,14 +17,10 @@ export default function SavedScreen() {
   } = useSaved();
 
   // Use tab context to update header color
-  const { setActiveTab } = useTabContext();
+
 
   // Set active tab when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab('saved');
-    }, [setActiveTab])
-  );
+
 
   // Handle job application from saved list using shared context
   const handleApplyToSavedJob = (jobId: string, jobTitle: string) => {

@@ -1,8 +1,7 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { useTabContext } from "./_layout";
+
 
 // Sample job data for employer
 const SAMPLE_POSTED_JOBS = [
@@ -41,13 +40,9 @@ export default function EmployerHomeScreen() {
   });
   
   const { user } = useAuth();
-  const { setActiveTab } = useTabContext();
 
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab('employer-home');
-    }, [setActiveTab])
-  );
+
+
 
   const handlePostJob = () => {
     if (!newJob.title.trim() || !newJob.location.trim() || !newJob.salary.trim()) {
