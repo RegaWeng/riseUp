@@ -179,9 +179,9 @@ export default function TrainingScreen() {
   return (
     <View style={styles.container}>
       {/* Status Section - Small like home page */}
-      <View style={styles.statusSection}>
-        <Text style={styles.subtitle}>Build skills for better opportunities</Text>
-        <Text style={styles.stats}>
+      <View style={[styles.statusSection, { backgroundColor: '#34C759' }]}>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Build skills for better opportunities</Text>
+        <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>
           {progressPercentage}% complete • {completedCount} of {totalVideos} videos
           {savedVideos.length > 0 && ` • ⭐ ${savedVideos.length} saved`}
         </Text>

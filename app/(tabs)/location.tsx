@@ -19,9 +19,9 @@ export default function LocationScreen() {
   return (
     <View style={styles.container}>
       {/* Status Section - Small like home page */}
-      <View style={styles.statusSection}>
-        <Text style={styles.subtitle}>Your current location</Text>
-        <Text style={styles.stats}>
+      <View style={[styles.statusSection, { backgroundColor: '#5856D6' }]}>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Your current location</Text>
+        <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>
           📍 GPS coordinates for job matching
         </Text>
       </View>

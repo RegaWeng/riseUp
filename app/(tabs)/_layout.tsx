@@ -4,6 +4,15 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
+// Color themes for each page
+const PAGE_THEMES = {
+  index: '#007AFF',      // Home - Blue
+  training: '#34C759',   // Training - Green  
+  saved: '#FF9500',      // Saved - Orange
+  location: '#5856D6',   // Location - Purple
+  profile: '#FF3B30',    // Profile - Red
+};
+
 const CustomHeader = () => {
   const { user, logout } = useAuth();
 

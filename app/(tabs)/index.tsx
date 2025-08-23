@@ -177,12 +177,12 @@ function UserHomeContent() {
                 {isSaved ? '★' : '☆'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.removeButton}
-              onPress={() => handleRemoveJob(item.id, item.title)}
-            >
-              <Text style={styles.removeButtonText}>✕</Text>
-            </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.removeButton}
+            onPress={() => handleRemoveJob(item.id, item.title)}
+          >
+            <Text style={styles.removeButtonText}>✕</Text>
+          </TouchableOpacity>
           </View>
         </View>
         
@@ -231,9 +231,9 @@ function UserHomeContent() {
   return (
     <View style={styles.container}>
       {/* Status Section */}
-      <View style={styles.statusSection}>
-        <Text style={styles.subtitle}>Find your next opportunity</Text>
-        <Text style={styles.stats}>
+      <View style={[styles.statusSection, { backgroundColor: '#007AFF' }]}>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Find your next opportunity</Text>
+        <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>
           Applied: {applicationCount} • Saved: {savedCount} • Removed: {removedCount}
         </Text>
       </View>
@@ -325,6 +325,19 @@ const styles = StyleSheet.create({
   },
   removeButtonText: {
     color: '#FF3B30',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  jobActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  starButton: {
+    padding: 5,
+  },
+  starButtonText: {
+    color: '#FFD700',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -646,9 +659,9 @@ function EmployerHomeContent() {
   return (
     <View style={styles.container}>
       {/* Status Section */}
-      <View style={styles.statusSection}>
-        <Text style={styles.subtitle}>Manage your job postings</Text>
-        <Text style={styles.stats}>Posted: {jobs.length} • Active: {jobs.filter(j => j.status === 'active').length}</Text>
+      <View style={[styles.statusSection, { backgroundColor: '#007AFF' }]}>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Manage your job postings</Text>
+        <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>Posted: {jobs.length} • Active: {jobs.filter(j => j.status === 'active').length}</Text>
       </View>
 
       {/* Content Container */}
@@ -729,8 +742,8 @@ function AdminHomeContent() {
   return (
     <View style={styles.container}>
       {/* Admin Toggle */}
-      <View style={styles.statusSection}>
-        <Text style={styles.subtitle}>Admin Dashboard</Text>
+      <View style={[styles.statusSection, { backgroundColor: '#007AFF' }]}>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Admin Dashboard</Text>
         <View style={styles.adminToggle}>
           <TouchableOpacity 
             style={[styles.toggleButton, viewMode === 'user' && styles.activeToggle]}

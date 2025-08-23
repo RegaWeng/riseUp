@@ -187,11 +187,11 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       {/* Status Section - Small like home page */}
-      <View style={styles.statusSection}>
+      <View style={[styles.statusSection, { backgroundColor: '#FF3B30' }]}>
         <View style={styles.statusContent}>
           <View style={styles.statusText}>
-            <Text style={styles.subtitle}>Your professional resume</Text>
-            <Text style={styles.stats}>
+            <Text style={[styles.subtitle, { color: 'white' }]}>Your professional resume</Text>
+            <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>
               {uniqueTrainingSkills.length + selectedSelfTaughtSkills.length} skills • {completedVideos.length} training completed
               {user && ` • ${user.type.charAt(0).toUpperCase() + user.type.slice(1)} Account`}
             </Text>
