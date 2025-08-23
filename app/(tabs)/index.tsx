@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useAuth } from '../context/AuthContext';
 import { useSaved } from '../context/SavedContext';
 
 
@@ -49,6 +50,23 @@ const SAMPLE_JOBS = [
 ];
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+  
+  // Render different content based on user type
+  if (user?.type === 'employer') {
+    return <EmployerHomeContent />;
+  }
+  
+  if (user?.type === 'admin') {
+    return <AdminHomeContent />;
+  }
+  
+  // Default user content
+  return <UserHomeContent />;
+}
+
+// User home content (job browsing)
+function UserHomeContent() {
   const [searchText, setSearchText] = useState("");
   const [removedJobs, setRemovedJobs] = useState<string[]>([]);
   
@@ -150,12 +168,22 @@ export default function HomeScreen() {
       <View style={styles.jobCard}>
         <View style={styles.jobHeader}>
           <Text style={styles.jobTitle}>{item.title}</Text>
-          <TouchableOpacity 
-            style={styles.removeButton}
-            onPress={() => handleRemoveJob(item.id, item.title)}
-          >
-            <Text style={styles.removeButtonText}>✕</Text>
-          </TouchableOpacity>
+          <View style={styles.jobActions}>
+            <TouchableOpacity 
+              style={styles.starButton}
+              onPress={() => isSaved ? unsaveJob(item.id) : saveJob(item)}
+            >
+              <Text style={styles.starButtonText}>
+                {isSaved ? '★' : '☆'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.removeButton}
+              onPress={() => handleRemoveJob(item.id, item.title)}
+            >
+              <Text style={styles.removeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         
         <Text style={styles.company}>{item.company}</Text>
@@ -381,4 +409,348 @@ const styles = StyleSheet.create({
   savedButtonText: {
     color: 'white',
   },
-}); 
+  // Employer-specific styles
+  postJobButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  postJobButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  jobStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  statText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    fontSize: 12,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+    backgroundColor: 'white',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalCancelButton: {
+    color: '#007AFF',
+    fontSize: 16,
+  },
+  modalPostButton: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalContent: {
+    padding: 16,
+  },
+  modalInput: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    fontSize: 16,
+  },
+  modalTextArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  // Admin-specific styles
+  adminToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#E5E5EA',
+    borderRadius: 8,
+    padding: 4,
+    marginTop: 8,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  activeToggle: {
+    backgroundColor: '#007AFF',
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  activeToggleText: {
+    color: 'white',
+  },
+});
+
+// Employer home content (job posting)
+function EmployerHomeContent() {
+  const [jobs, setJobs] = useState([
+    {
+      id: '1',
+      title: 'Cashier',
+      company: 'Metro Grocery',
+      location: 'Downtown',
+      salary: '$15/hour',
+      description: 'Looking for a reliable cashier to join our team.',
+      applications: 5,
+      status: 'active',
+      postedDate: '2024-01-15',
+    },
+    {
+      id: '2',
+      title: 'Delivery Driver',
+      company: 'Metro Grocery',
+      location: 'City Wide',
+      salary: '$18/hour + tips',
+      description: 'Experienced drivers needed for food delivery service.',
+      applications: 3,
+      status: 'active',
+      postedDate: '2024-01-10',
+    },
+  ]);
+  
+  const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
+  const [newJob, setNewJob] = useState({
+    title: '',
+    location: '',
+    salary: '',
+    description: '',
+  });
+
+  const handlePostJob = () => {
+    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.salary.trim()) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    const job = {
+      id: Date.now().toString(),
+      title: newJob.title,
+      company: 'Your Company', // In real app, get from user profile
+      location: newJob.location,
+      salary: newJob.salary,
+      description: newJob.description,
+      applications: 0,
+      status: 'active',
+      postedDate: new Date().toISOString().split('T')[0],
+    };
+
+    setJobs(prev => [job, ...prev]);
+    setNewJob({ title: '', location: '', salary: '', description: '' });
+    setIsPostJobModalVisible(false);
+    Alert.alert('Success', 'Job posted successfully!');
+  };
+
+  const handleDeleteJob = (jobId: string, jobTitle: string) => {
+    Alert.alert(
+      'Delete Job',
+      `Are you sure you want to delete "${jobTitle}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => setJobs(prev => prev.filter(job => job.id !== jobId))
+        }
+      ]
+    );
+  };
+
+  const renderJobItem = ({ item }: { item: any }) => (
+    <View style={styles.jobCard}>
+      <View style={styles.jobHeader}>
+        <Text style={styles.jobTitle}>{item.title}</Text>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteJob(item.id, item.title)}
+        >
+          <Text style={styles.deleteButtonText}>✕</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.jobSalary}>{item.salary}</Text>
+      <Text style={styles.jobDescription}>{item.description}</Text>
+      
+      <View style={styles.jobStats}>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{item.applications}</Text>
+          <Text style={styles.statLabel}>Applications</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statText}>Posted: {item.postedDate}</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statusBadge, { backgroundColor: item.status === 'active' ? '#34C759' : '#FF9500' }]}>
+            {item.status}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* Status Section */}
+      <View style={styles.statusSection}>
+        <Text style={styles.subtitle}>Manage your job postings</Text>
+        <Text style={styles.stats}>Posted: {jobs.length} • Active: {jobs.filter(j => j.status === 'active').length}</Text>
+      </View>
+
+      {/* Content Container */}
+      <View style={styles.contentContainer}>
+        <View style={styles.searchContainer}>
+          <TouchableOpacity 
+            style={styles.postJobButton}
+            onPress={() => setIsPostJobModalVisible(true)}
+          >
+            <Text style={styles.postJobButtonText}>+ Post New Job</Text>
+          </TouchableOpacity>
+        </View>
+
+        <FlatList
+          data={jobs}
+          renderItem={renderJobItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      </View>
+
+      {/* Post Job Modal */}
+      <Modal
+        visible={isPostJobModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setIsPostJobModalVisible(false)}>
+              <Text style={styles.modalCancelButton}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Post New Job</Text>
+            <TouchableOpacity onPress={handlePostJob}>
+              <Text style={styles.modalPostButton}>Post</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Job Title *"
+              value={newJob.title}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, title: text }))}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Location *"
+              value={newJob.location}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, location: text }))}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Salary *"
+              value={newJob.salary}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, salary: text }))}
+            />
+            <TextInput
+              style={[styles.modalInput, styles.modalTextArea]}
+              placeholder="Job Description"
+              value={newJob.description}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, description: text }))}
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+// Admin home content (shows both user and employer views)
+function AdminHomeContent() {
+  const [viewMode, setViewMode] = useState<'user' | 'employer'>('user');
+  
+  return (
+    <View style={styles.container}>
+      {/* Admin Toggle */}
+      <View style={styles.statusSection}>
+        <Text style={styles.subtitle}>Admin Dashboard</Text>
+        <View style={styles.adminToggle}>
+          <TouchableOpacity 
+            style={[styles.toggleButton, viewMode === 'user' && styles.activeToggle]}
+            onPress={() => setViewMode('user')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'user' && styles.activeToggleText]}>User View</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.toggleButton, viewMode === 'employer' && styles.activeToggle]}
+            onPress={() => setViewMode('employer')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'employer' && styles.activeToggleText]}>Employer View</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Render selected view */}
+      <View style={styles.contentContainer}>
+        {viewMode === 'user' ? <UserHomeContent /> : <EmployerHomeContent />}
+      </View>
+    </View>
+  );
+} 
