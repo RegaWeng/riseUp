@@ -1,4 +1,5 @@
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { AdminToggle } from "../components/AdminToggle";
 import { useSaved } from "../context/SavedContext";
 
 
@@ -181,6 +182,9 @@ export default function SavedScreen() {
           📌 {savedJobs.length + savedVideos.length} items saved
         </Text>
       </View>
+
+      {/* Admin Toggle */}
+      <AdminToggle />
 
       {/* Large scrollable content area like home page */}
       <SectionList

@@ -40,10 +40,7 @@ export default function LoginScreen() {
     }
   };
 
-  const fillSampleCredentials = () => {
-    setEmail('user@example.com');
-    setPassword('user123');
-  };
+
 
   return (
     <KeyboardAvoidingView 
@@ -89,10 +86,7 @@ export default function LoginScreen() {
             />
           </View>
 
-                                {/* Sample Credentials Button */}
-           <TouchableOpacity style={styles.sampleButton} onPress={fillSampleCredentials}>
-             <Text style={styles.sampleButtonText}>Fill Sample Credentials</Text>
-           </TouchableOpacity>
+
 
            {/* Login Button */}
            <TouchableOpacity
@@ -212,18 +206,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  sampleButton: {
-    backgroundColor: '#f0f0f0',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sampleButtonText: {
-    color: '#666',
-    fontSize: 14,
-    fontWeight: '500',
-  },
+
   loginButton: {
     padding: 16,
     borderRadius: 12,

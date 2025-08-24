@@ -1,4 +1,15 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import {
+    getAppliedJobs,
+    getCompletedVideos,
+    getSavedJobs,
+    getSavedVideos,
+    saveAppliedJobs,
+    saveCompletedVideos,
+    saveSavedJobs,
+    saveSavedVideos
+} from '../utils/localStorage';
+import { useAdmin } from './AdminContext';
 
 // Define the structure of saved items
 interface SavedJob {
@@ -126,10 +137,53 @@ export const TRAINING_DATA: TrainingVideo[] = [
 
 // Provider component
 export const SavedProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { getCurrentUserType } = useAdmin();
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
   const [completedVideos, setCompletedVideos] = useState<string[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
+
+  // Load data from localStorage based on current user type
+  useEffect(() => {
+    const loadStoredData = async () => {
+      const userType = getCurrentUserType();
+      
+      const [storedSavedJobs, storedSavedVideos, storedCompletedVideos, storedAppliedJobs] = await Promise.all([
+        getSavedJobs(userType),
+        getSavedVideos(userType),
+        getCompletedVideos(userType),
+        getAppliedJobs(userType)
+      ]);
+      
+      setSavedJobs(storedSavedJobs);
+      setSavedVideos(storedSavedVideos);
+      setCompletedVideos(storedCompletedVideos);
+      setAppliedJobs(storedAppliedJobs);
+    };
+    
+    loadStoredData();
+  }, [getCurrentUserType]);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    const userType = getCurrentUserType();
+    saveSavedJobs(userType, savedJobs);
+  }, [savedJobs, getCurrentUserType]);
+
+  useEffect(() => {
+    const userType = getCurrentUserType();
+    saveSavedVideos(userType, savedVideos);
+  }, [savedVideos, getCurrentUserType]);
+
+  useEffect(() => {
+    const userType = getCurrentUserType();
+    saveCompletedVideos(userType, completedVideos);
+  }, [completedVideos, getCurrentUserType]);
+
+  useEffect(() => {
+    const userType = getCurrentUserType();
+    saveAppliedJobs(userType, appliedJobs);
+  }, [appliedJobs, getCurrentUserType]);
 
   // Save a job
   const saveJob = (job: SavedJob) => {

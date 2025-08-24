@@ -1,18 +1,18 @@
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useAuth, UserType } from './context/AuthContext';
-import { router } from 'expo-router';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -36,6 +36,12 @@ export default function RegisterScreen() {
       label: 'Employer',
       description: 'Post jobs and manage applications',
       color: '#007AFF',
+    },
+    {
+      type: 'admin',
+      label: 'Administrator',
+      description: 'Manage system and access all data',
+      color: '#FF3B30',
     },
   ];
 
