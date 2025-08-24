@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useAuth } from '../context/AuthContext';
 import { TRAINING_DATA, useSaved } from "../context/SavedContext";
+import { apiService, Application } from '../services/api';
 
 
 const SKILL_CATEGORIES = [
@@ -12,6 +14,19 @@ const SKILL_CATEGORIES = [
 ];
 
 export default function TrainingScreen() {
+  const { user } = useAuth();
+  
+  // Show different content based on user type
+  if (user?.type === 'employer') {
+    return <EmployerTrainingContent />;
+  }
+  
+  // Default training videos for regular users
+  return <UserTrainingContent />;
+}
+
+// User training content (original training videos)
+function UserTrainingContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   
   // Use shared context for everything
@@ -209,6 +224,199 @@ export default function TrainingScreen() {
   );
 }
 
+// Employer training content (shows job applicants)
+function EmployerTrainingContent() {
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  const fetchApplications = async () => {
+    try {
+      const apps = await apiService.getApplicationsForEmployer();
+      setApplications(apps);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      Alert.alert('Error', 'Failed to load applications');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateApplicationStatus = async (applicationId: string, newStatus: Application['status']) => {
+    try {
+      await apiService.updateApplicationStatus(applicationId, newStatus);
+      // Refresh applications
+      fetchApplications();
+      Alert.alert('Success', 'Application status updated');
+    } catch (error) {
+      console.error('Error updating application:', error);
+      Alert.alert('Error', 'Failed to update application status');
+    }
+  };
+
+  // Filter applications by status
+  const filteredApplications = selectedStatus === 'All' 
+    ? applications 
+    : applications.filter(app => app.status === selectedStatus);
+
+  // Count applications by status
+  const statusCounts = {
+    all: applications.length,
+    pending: applications.filter(app => app.status === 'pending').length,
+    reviewed: applications.filter(app => app.status === 'reviewed').length,
+    shortlisted: applications.filter(app => app.status === 'shortlisted').length,
+    rejected: applications.filter(app => app.status === 'rejected').length,
+  };
+
+  // Render status filter buttons
+  const renderStatusFilter = () => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryContainer}>
+      <TouchableOpacity
+        style={[
+          styles.categoryButton,
+          selectedStatus === 'All' && styles.categoryButtonActive
+        ]}
+        onPress={() => setSelectedStatus('All')}
+      >
+        <Text style={[
+          styles.categoryButtonText,
+          selectedStatus === 'All' && styles.categoryButtonTextActive
+        ]}>
+          All ({statusCounts.all})
+        </Text>
+      </TouchableOpacity>
+      
+      {['pending', 'reviewed', 'shortlisted', 'rejected'].map((status) => (
+        <TouchableOpacity
+          key={status}
+          style={[
+            styles.categoryButton,
+            selectedStatus === status && styles.categoryButtonActive
+          ]}
+          onPress={() => setSelectedStatus(status)}
+        >
+          <Text style={[
+            styles.categoryButtonText,
+            selectedStatus === status && styles.categoryButtonTextActive
+          ]}>
+            {status.charAt(0).toUpperCase() + status.slice(1)} ({statusCounts[status as keyof typeof statusCounts]})
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+
+  // Render each application item
+  const renderApplicationItem = ({ item }: { item: Application }) => (
+    <View style={styles.videoCard}>
+      <View style={styles.videoHeader}>
+        <View style={styles.videoInfo}>
+          <Text style={styles.videoTitle}>{item.user.name}</Text>
+          <Text style={styles.videoCategory}>{item.user.email}</Text>
+        </View>
+        <View style={styles.videoHeaderButtons}>
+          <View style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusColor(item.status) }
+          ]}>
+            <Text style={styles.statusText}>{item.status}</Text>
+          </View>
+        </View>
+      </View>
+      
+      <Text style={styles.videoDescription}>
+        Applied for: {item.job.title} at {item.job.company}
+      </Text>
+      <Text style={styles.videoDescription}>
+        Location: {item.job.location}
+      </Text>
+      <Text style={styles.videoDescription}>
+        Applied: {new Date(item.appliedDate).toLocaleDateString()}
+      </Text>
+      
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
+          onPress={() => updateApplicationStatus(item._id, 'reviewed')}
+        >
+          <Text style={styles.actionButtonText}>Mark Reviewed</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#34C759' }]}
+          onPress={() => updateApplicationStatus(item._id, 'shortlisted')}
+        >
+          <Text style={styles.actionButtonText}>Shortlist</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#FF3B30' }]}
+          onPress={() => updateApplicationStatus(item._id, 'rejected')}
+        >
+          <Text style={styles.actionButtonText}>Reject</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return '#FF9500';
+      case 'reviewed': return '#007AFF';
+      case 'shortlisted': return '#34C759';
+      case 'rejected': return '#FF3B30';
+      default: return '#666';
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#34C759" />
+        <Text style={{ marginTop: 10, color: '#666' }}>Loading applications...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Status Section */}
+      <View style={[styles.statusSection, { backgroundColor: '#34C759' }]}>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Job Applications Management</Text>
+        <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>
+          {applications.length} total applications • {statusCounts.pending} pending review
+        </Text>
+      </View>
+
+      {/* Status Filter */}
+      <View style={styles.filterSection}>
+        {renderStatusFilter()}
+      </View>
+
+      {/* Applications List */}
+      <FlatList
+        data={filteredApplications}
+        renderItem={renderApplicationItem}
+        keyExtractor={(item) => item._id}
+        style={styles.videoList}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <Text style={styles.videoSectionTitle}>
+            {selectedStatus === 'All' ? 'All Applications' : `${selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)} Applications`} ({filteredApplications.length})
+          </Text>
+        }
+        ListEmptyComponent={
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Text style={{ color: '#666', fontSize: 16 }}>No applications found</Text>
+          </View>
+        }
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -378,5 +586,33 @@ const styles = StyleSheet.create({
   },
   completedButtonText: {
     color: 'white',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 8,
+    marginHorizontal: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
 }); 

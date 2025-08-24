@@ -98,7 +98,7 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     // Add authorization header if token exists
@@ -185,6 +185,14 @@ class ApiService {
   // Applications API
   async getApplications(): Promise<Application[]> {
     return this.request<Application[]>('/applications');
+  }
+
+  async getApplicationsForEmployer(): Promise<Application[]> {
+    return this.request<Application[]>('/applications');
+  }
+
+  async getApplicationsForJob(jobId: string): Promise<Application[]> {
+    return this.request<Application[]>(`/applications/job/${jobId}`);
   }
 
   async createApplication(jobId: string): Promise<Application> {
