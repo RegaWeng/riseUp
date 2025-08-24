@@ -45,10 +45,24 @@ export interface Application {
   job: Job;
 }
 
+// Job categories from backend
+export const JOB_CATEGORIES = [
+  "Cleaning & Maintenance",
+  "Retail & Sales", 
+  "Food Services",
+  "Warehouse & Logistics",
+  "Customer Service",
+  "Delivery & Transportation",
+  "Healthcare Support",
+  "Administrative Assistant",
+  "Security",
+  "Other"
+] as const;
+
 export interface CreateJobRequest {
   title: string;
   company: string;
-  jobType: string;
+  jobType: string; // Must be one of JOB_CATEGORIES
   location: string;
   workingHours: {
     weekday: string;
@@ -58,7 +72,7 @@ export interface CreateJobRequest {
   minimumSalary: string;
   experienceRequired?: string;
   trainingProvided?: string;
-  requiredSkills: string[];
+  requiredSkills: string[]; // Must include "Basic English" and max 3 skills
 }
 
 export interface CreateUserRequest {

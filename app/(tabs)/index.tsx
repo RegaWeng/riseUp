@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from '../context/AuthContext';
 import { useSaved } from '../context/SavedContext';
+import { apiService, Job } from '../services/api';
 
 
 
@@ -68,7 +69,47 @@ export default function HomeScreen() {
 // User home content (job browsing)
 function UserHomeContent() {
   const [searchText, setSearchText] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [removedJobs, setRemovedJobs] = useState<string[]>([]);
+  
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const fetchedJobs = await apiService.getJobs();
+        setJobs(fetchedJobs);
+        setFilteredJobs(fetchedJobs);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        Alert.alert('Error', 'Failed to load jobs. Please try again.');
+        // Fallback to sample data
+        setJobs([]);
+        setFilteredJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  // Filter jobs based on search text
+  useEffect(() => {
+    if (searchText.trim() === '') {
+      setFilteredJobs(jobs.filter(job => !removedJobs.includes(job._id)));
+    } else {
+      const filtered = jobs.filter(job => 
+        !removedJobs.includes(job._id) &&
+        (job.title.toLowerCase().includes(searchText.toLowerCase()) ||
+         job.company.toLowerCase().includes(searchText.toLowerCase()) ||
+         job.location.toLowerCase().includes(searchText.toLowerCase()) ||
+         job.jobType.toLowerCase().includes(searchText.toLowerCase()))
+      );
+      setFilteredJobs(filtered);
+    }
+  }, [searchText, jobs, removedJobs]);
   
   // Use shared context for saved jobs and job applications
   const { 
@@ -95,15 +136,22 @@ function UserHomeContent() {
     job.skills.some(skill => skill.toLowerCase().includes(searchText.toLowerCase())))
   );
 
-  // Handle job application using shared context
-  const handleApply = (jobId: string, jobTitle: string) => {
+  // Handle job application using shared context and API
+  const handleApply = async (jobId: string, jobTitle: string) => {
     if (isJobApplied(jobId)) {
       console.log(`Already applied to ${jobTitle}`);
       return;
     }
 
-    applyToJob(jobId);
-    console.log(`Application submitted for ${jobTitle}`);
+    try {
+      await apiService.createApplication(jobId);
+      applyToJob(jobId);
+      Alert.alert('Success', `Applied to ${jobTitle} successfully!`);
+      console.log(`Application submitted for ${jobTitle}`);
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      Alert.alert('Error', 'Failed to apply to job. Please try again.');
+    }
   };
 
   // Handle withdrawing application using shared context
@@ -131,7 +179,7 @@ function UserHomeContent() {
 
   // Handle saving job using shared context
   const handleSaveJob = (jobId: string, jobTitle: string) => {
-    const job = SAMPLE_JOBS.find(j => j.id === jobId);
+    const job = filteredJobs.find(j => j._id === jobId);
     if (!job) return;
 
     if (isJobSaved(jobId)) {
@@ -141,12 +189,12 @@ function UserHomeContent() {
     } else {
       // Not saved - save it
       const savedJob = {
-        id: job.id,
+        id: job._id,
         title: job.title,
         company: job.company,
         location: job.location,
-        salary: job.salary,
-        skills: job.skills,
+        salary: job.minimumSalary,
+        skills: job.requiredSkills,
         savedDate: new Date().toISOString(),
         type: 'job' as const,
       };
@@ -160,9 +208,9 @@ function UserHomeContent() {
   const savedCount = savedJobs.length;
   const removedCount = removedJobs.length;
 
-  const renderJobItem = ({ item }: { item: any }) => {
-    const hasApplied = isJobApplied(item.id);
-    const isSaved = isJobSaved(item.id);
+  const renderJobItem = ({ item }: { item: Job }) => {
+    const hasApplied = isJobApplied(item._id);
+    const isSaved = isJobSaved(item._id);
 
     return (
       <View style={styles.jobCard}>
@@ -171,7 +219,7 @@ function UserHomeContent() {
           <View style={styles.jobActions}>
             <TouchableOpacity 
               style={styles.starButton}
-              onPress={() => isSaved ? unsaveJob(item.id) : saveJob(item)}
+              onPress={() => handleSaveJob(item._id, item.title)}
             >
               <Text style={styles.starButtonText}>
                 {isSaved ? '★' : '☆'}
@@ -179,7 +227,7 @@ function UserHomeContent() {
             </TouchableOpacity>
           <TouchableOpacity 
             style={styles.removeButton}
-            onPress={() => handleRemoveJob(item.id, item.title)}
+            onPress={() => handleRemove(item._id, item.title)}
           >
             <Text style={styles.removeButtonText}>✕</Text>
           </TouchableOpacity>
@@ -249,13 +297,25 @@ function UserHomeContent() {
       </View>
 
       {/* Job List */}
-      <FlatList
-        data={filteredJobs}
-        renderItem={renderJobItem}
-        keyExtractor={(item) => item.id}
-        style={styles.jobList}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading jobs...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredJobs}
+          renderItem={renderJobItem}
+          keyExtractor={(item) => item._id}
+          style={styles.jobList}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No jobs available at the moment</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -522,6 +582,50 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  jobType: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  skillsLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  skillsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  learnableSkillTag: {
+    backgroundColor: '#e8f5e8',
+    borderColor: '#34C759',
+  },
+  learnableSkillText: {
+    color: '#34C759',
+  },
   // Admin-specific styles
   adminToggle: {
     flexDirection: 'row',
@@ -552,61 +656,91 @@ const styles = StyleSheet.create({
 
 // Employer home content (job posting)
 function EmployerHomeContent() {
-  const [jobs, setJobs] = useState([
-    {
-      id: '1',
-      title: 'Cashier',
-      company: 'Metro Grocery',
-      location: 'Downtown',
-      salary: '$15/hour',
-      description: 'Looking for a reliable cashier to join our team.',
-      applications: 5,
-      status: 'active',
-      postedDate: '2024-01-15',
-    },
-    {
-      id: '2',
-      title: 'Delivery Driver',
-      company: 'Metro Grocery',
-      location: 'City Wide',
-      salary: '$18/hour + tips',
-      description: 'Experienced drivers needed for food delivery service.',
-      applications: 3,
-      status: 'active',
-      postedDate: '2024-01-10',
-    },
-  ]);
-  
+  const { user } = useAuth();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
   const [newJob, setNewJob] = useState({
     title: '',
+    company: user?.name || 'Your Company',
+    jobType: 'Other',
     location: '',
-    salary: '',
-    description: '',
+    workingHours: {
+      weekday: '9 AM - 5 PM',
+      weekend: 'Off'
+    },
+    minimumSalary: '',
+    requiredSkills: ['Basic English'],
+    learnableSkills: [],
+    experienceRequired: '',
+    trainingProvided: '',
   });
 
-  const handlePostJob = () => {
-    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.salary.trim()) {
+  // Fetch employer's jobs
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const allJobs = await apiService.getJobs();
+        // Filter jobs by company (in a real app, you'd filter by employer ID)
+        const employerJobs = allJobs.filter(job => job.company === (user?.name || 'Your Company'));
+        setJobs(employerJobs);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        Alert.alert('Error', 'Failed to load jobs');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, [user]);
+
+  const handlePostJob = async () => {
+    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.minimumSalary.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
-    const job = {
-      id: Date.now().toString(),
-      title: newJob.title,
-      company: 'Your Company', // In real app, get from user profile
-      location: newJob.location,
-      salary: newJob.salary,
-      description: newJob.description,
-      applications: 0,
-      status: 'active',
-      postedDate: new Date().toISOString().split('T')[0],
-    };
+    try {
+      const jobData = {
+        title: newJob.title,
+        company: newJob.company,
+        jobType: newJob.jobType,
+        location: newJob.location,
+        workingHours: newJob.workingHours,
+        minimumSalary: newJob.minimumSalary,
+        requiredSkills: newJob.requiredSkills,
+        learnableSkills: newJob.learnableSkills,
+        experienceRequired: newJob.experienceRequired,
+        trainingProvided: newJob.trainingProvided,
+      };
 
-    setJobs(prev => [job, ...prev]);
-    setNewJob({ title: '', location: '', salary: '', description: '' });
-    setIsPostJobModalVisible(false);
-    Alert.alert('Success', 'Job posted successfully!');
+      const createdJob = await apiService.createJob(jobData);
+      setJobs(prev => [createdJob, ...prev]);
+      
+      // Reset form
+      setNewJob({
+        title: '',
+        company: user?.name || 'Your Company',
+        jobType: 'Other',
+        location: '',
+        workingHours: {
+          weekday: '9 AM - 5 PM',
+          weekend: 'Off'
+        },
+        minimumSalary: '',
+        requiredSkills: ['Basic English'],
+        learnableSkills: [],
+        experienceRequired: '',
+        trainingProvided: '',
+      });
+      
+      setIsPostJobModalVisible(false);
+      Alert.alert('Success', 'Job posted successfully!');
+    } catch (error) {
+      console.error('Error creating job:', error);
+      Alert.alert('Error', 'Failed to post job. Please try again.');
+    }
   };
 
   const handleDeleteJob = (jobId: string, jobTitle: string) => {
