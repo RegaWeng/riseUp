@@ -12,6 +12,17 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get jobs pending approval (admin only) - MUST be before /:id route
+router.get('/pending', async (req, res) => {
+    try {
+        const jobs = await Job.find({ approvalStatus: 'preparing' })
+            .sort({ datePosted: -1 });
+        res.json(jobs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // GET single job by ID
 router.get('/:id', async (req, res) => {
     try {
@@ -139,17 +150,6 @@ router.put('/reject/:id', async (req, res) => {
         }
         
         res.json(job);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get jobs pending approval (admin only)
-router.get('/pending', async (req, res) => {
-    try {
-        const jobs = await Job.find({ approvalStatus: 'preparing' })
-            .sort({ datePosted: -1 });
-        res.json(jobs);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
