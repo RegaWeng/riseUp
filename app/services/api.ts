@@ -25,6 +25,10 @@ export interface Job {
   requiredSkills: string[];
   datePosted: string;
   isActive: boolean;
+  approvalStatus: 'preparing' | 'active' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface User {
@@ -238,6 +242,25 @@ class ApiService {
   // Test connection
   async testConnection(): Promise<{ message: string }> {
     return this.request<{ message: string }>('/test');
+  }
+
+  // Admin job approval methods
+  async approveJob(jobId: string, adminId: string): Promise<Job> {
+    return this.request<Job>(`/jobs/approve/${jobId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ adminId })
+    });
+  }
+
+  async rejectJob(jobId: string, adminId: string, reason?: string): Promise<Job> {
+    return this.request<Job>(`/jobs/reject/${jobId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ adminId, reason })
+    });
+  }
+
+  async getPendingJobs(): Promise<Job[]> {
+    return this.request<Job[]>('/jobs/pending');
   }
 }
 

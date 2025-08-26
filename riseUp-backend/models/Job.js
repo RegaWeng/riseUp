@@ -87,6 +87,23 @@ const jobSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+
+    approvalStatus: {
+        type: String,
+        enum: ['preparing', 'active', 'rejected'],
+        default: 'preparing'
+    },
+
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
+
+    approvedAt: {
+        type: Date,
+        required: false
     }
 
 });

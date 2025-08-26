@@ -75,13 +75,14 @@ function UserHomeContent() {
     fetchJobs();
   }, []);
 
-  // Filter jobs based on search text, no-experience filter, and exclude removed jobs
+  // Filter jobs based on search text, no-experience filter, approval status, and exclude removed jobs
   const filteredJobs = jobs.filter(job => 
     !removedJobs.includes(job.id) && // Don't show removed jobs
     (job.title.toLowerCase().includes(searchText.toLowerCase()) ||
     job.company.toLowerCase().includes(searchText.toLowerCase()) ||
     job.skills.some((skill: string) => skill.toLowerCase().includes(searchText.toLowerCase()))) &&
-    (!showNoExperienceOnly || job.noExperienceNeeded) // Show only no-experience jobs when filter is on
+    (!showNoExperienceOnly || job.noExperienceNeeded) && // Show only no-experience jobs when filter is on
+    true // TODO: Add user role check for approval status
   );
 
   // Handle job application using shared context
@@ -558,7 +559,77 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontWeight: 'bold',
+  },
+  activeBadge: {
+    backgroundColor: '#34C759', // Green
+  },
+  preparingBadge: {
+    backgroundColor: '#8E8E93', // Grey
+  },
+  rejectedBadge: {
+    backgroundColor: '#FF3B30', // Red
+  },
+  adminActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  approveButton: {
     backgroundColor: '#34C759',
+  },
+  rejectButton: {
+    backgroundColor: '#FF3B30',
+  },
+  actionButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  adminToggle: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+    padding: 4,
+    marginTop: 12,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  activeToggle: {
+    backgroundColor: 'white',
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
+  },
+  activeToggleText: {
+    color: '#007AFF',
   },
   modalContainer: {
     flex: 1,
@@ -1021,8 +1092,14 @@ function EmployerHomeContent() {
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statusBadge}>
-            Active
+          <Text style={[
+            styles.statusBadge,
+            item.approvalStatus === 'active' && styles.activeBadge,
+            item.approvalStatus === 'preparing' && styles.preparingBadge,
+            item.approvalStatus === 'rejected' && styles.rejectedBadge
+          ]}>
+            {item.approvalStatus === 'active' ? 'Active' :
+             item.approvalStatus === 'preparing' ? 'Preparing' : 'Rejected'}
           </Text>
         </View>
       </View>
@@ -1279,35 +1356,157 @@ function EmployerHomeContent() {
   );
 }
 
-// Admin home content (shows both user and employer views)
-function AdminHomeContent() {
-  const [viewMode, setViewMode] = useState<'user' | 'employer'>('user');
-  
-  return (
-    <View style={styles.container}>
-      {/* Admin Toggle */}
-      <View style={[styles.statusSection, { backgroundColor: '#007AFF' }]}>
-        <Text style={[styles.subtitle, { color: 'white' }]}>Admin Dashboard</Text>
-        <View style={styles.adminToggle}>
-          <TouchableOpacity 
-            style={[styles.toggleButton, viewMode === 'user' && styles.activeToggle]}
-            onPress={() => setViewMode('user')}
-          >
-            <Text style={[styles.toggleText, viewMode === 'user' && styles.activeToggleText]}>User View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.toggleButton, viewMode === 'employer' && styles.activeToggle]}
-            onPress={() => setViewMode('employer')}
-          >
-            <Text style={[styles.toggleText, viewMode === 'employer' && styles.activeToggleText]}>Employer View</Text>
-          </TouchableOpacity>
+// Admin approval content for pending jobs
+function AdminApprovalContent() {
+  const { user } = useAuth();
+  const [pendingJobs, setPendingJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchPendingJobs();
+  }, []);
+
+  const fetchPendingJobs = async () => {
+    try {
+      setLoading(true);
+      const jobs = await apiService.getPendingJobs();
+      setPendingJobs(jobs);
+    } catch (error) {
+      console.error('Error fetching pending jobs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproveJob = async (jobId: string) => {
+    try {
+      await apiService.approveJob(jobId, user?._id || '');
+      // Refresh pending jobs
+      fetchPendingJobs();
+    } catch (error) {
+      console.error('Error approving job:', error);
+    }
+  };
+
+  const handleRejectJob = async (jobId: string, reason?: string) => {
+    try {
+      await apiService.rejectJob(jobId, user?._id || '', reason);
+      // Refresh pending jobs
+      fetchPendingJobs();
+    } catch (error) {
+      console.error('Error rejecting job:', error);
+    }
+  };
+
+  const renderPendingJobItem = ({ item }: { item: any }) => (
+    <View style={styles.jobCard}>
+      <View style={styles.jobHeader}>
+        <Text style={styles.jobTitle}>{item.title}</Text>
+        <View style={[styles.statusBadge, styles.preparingBadge]}>
+          <Text style={styles.statusBadge}>Pending Review</Text>
         </View>
       </View>
+      <Text style={styles.company}>{item.company}</Text>
+      <Text style={styles.company}>{item.jobType}</Text>
+      <Text style={styles.location}>{item.location}</Text>
+      <Text style={styles.jobSalary}>
+        Minimum ${item.minimumSalary} per hour
+      </Text>
+      
+      {item.trainingProvided && (
+        <Text style={styles.jobDescription}>{item.trainingProvided}</Text>
+      )}
 
-      {/* Render selected view */}
-      <View style={styles.contentContainer}>
-        {viewMode === 'user' ? <UserHomeContent /> : <EmployerHomeContent />}
+      <View style={styles.adminActions}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.approveButton]}
+          onPress={() => handleApproveJob(item._id)}
+        >
+          <Text style={styles.actionButtonText}>✓ Approve</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.rejectButton]}
+          onPress={() => handleRejectJob(item._id, 'Does not meet requirements')}
+        >
+          <Text style={styles.actionButtonText}>✕ Reject</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
-} 
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.statusSection, { backgroundColor: '#FF9500' }]}>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Job Approval Queue</Text>
+        <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>
+          {pendingJobs.length} jobs pending review
+        </Text>
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <Text>Loading pending jobs...</Text>
+        </View>
+      ) : pendingJobs.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No jobs pending approval</Text>
+          <Text style={styles.emptyText}>Create a job as employer first, then it will appear here</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={pendingJobs}
+          renderItem={renderPendingJobItem}
+          keyExtractor={(item) => item._id}
+          style={styles.jobList}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </View>
+  );
+}
+
+export default function Home() {
+  const { user } = useAuth();
+  const [viewMode, setViewMode] = useState<'user' | 'employer' | 'admin'>('user');
+
+  // If admin, show admin dashboard with toggle options
+  if (user?.type === 'admin') {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.statusSection, { backgroundColor: '#007AFF' }]}>
+          <Text style={[styles.subtitle, { color: 'white' }]}>Admin Dashboard</Text>
+          <View style={styles.adminToggle}>
+            <TouchableOpacity 
+              style={[styles.toggleButton, viewMode === 'user' && styles.activeToggle]}
+              onPress={() => setViewMode('user')}
+            >
+              <Text style={[styles.toggleText, viewMode === 'user' && styles.activeToggleText]}>User View</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.toggleButton, viewMode === 'employer' && styles.activeToggle]}
+              onPress={() => setViewMode('employer')}
+            >
+              <Text style={[styles.toggleText, viewMode === 'employer' && styles.activeToggleText]}>Employer View</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.toggleButton, viewMode === 'admin' && styles.activeToggle]}
+              onPress={() => setViewMode('admin')}
+            >
+              <Text style={[styles.toggleText, viewMode === 'admin' && styles.activeToggleText]}>Admin Panel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {viewMode === 'admin' ? <AdminApprovalContent /> :
+         viewMode === 'user' ? <UserHomeContent /> : <EmployerHomeContent />}
+      </View>
+    );
+  }
+
+  // Otherwise show user or employer content based on role
+  return (
+    <View style={styles.container}>
+      {user?.type === 'employer' ? <EmployerHomeContent /> : <UserHomeContent />}
+    </View>
+  );
+}

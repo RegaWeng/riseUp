@@ -95,4 +95,64 @@ router.get('/search/location/:location', async (req, res) => {
     }
 });
 
+// Admin approve job
+router.put('/approve/:id', async (req, res) => {
+    try {
+        const { adminId } = req.body;
+        const job = await Job.findByIdAndUpdate(
+            req.params.id,
+            {
+                approvalStatus: 'active',
+                approvedBy: adminId,
+                approvedAt: new Date()
+            },
+            { new: true }
+        );
+        
+        if (!job) {
+            return res.status(404).json({ error: 'Job not found' });
+        }
+        
+        res.json(job);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin reject job
+router.put('/reject/:id', async (req, res) => {
+    try {
+        const { adminId, reason } = req.body;
+        const job = await Job.findByIdAndUpdate(
+            req.params.id,
+            {
+                approvalStatus: 'rejected',
+                approvedBy: adminId,
+                approvedAt: new Date(),
+                rejectionReason: reason
+            },
+            { new: true }
+        );
+        
+        if (!job) {
+            return res.status(404).json({ error: 'Job not found' });
+        }
+        
+        res.json(job);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get jobs pending approval (admin only)
+router.get('/pending', async (req, res) => {
+    try {
+        const jobs = await Job.find({ approvalStatus: 'preparing' })
+            .sort({ datePosted: -1 });
+        res.json(jobs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
