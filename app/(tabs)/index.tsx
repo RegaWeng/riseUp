@@ -55,6 +55,7 @@ function UserHomeContent() {
           id: job._id,
           title: job.title,
           company: job.company,
+          jobType: job.jobType,
           location: job.location,
           salary: job.minimumSalary,
           skills: job.requiredSkills,
@@ -150,8 +151,14 @@ function UserHomeContent() {
         </View>
         
         <Text style={styles.company}>{item.company}</Text>
+        {item.jobType && (
+          <Text style={styles.jobType}>📋 {item.jobType}</Text>
+        )}
         <Text style={styles.location}>{item.location}</Text>
-        <Text style={styles.salary}>{item.salary}</Text>
+        <Text style={styles.salary}>
+          {item.salary.includes('$') ? item.salary : `$${item.salary}`}
+          {!item.salary.toLowerCase().includes('hour') && !item.salary.toLowerCase().includes('/') ? ' per hour' : ''}
+        </Text>
         
         <View style={styles.skillsContainer}>
           {item.skills.map((skill: string, index: number) => (
@@ -355,6 +362,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginBottom: 2,
+  },
+  jobType: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginBottom: 4,
+    fontWeight: '500',
   },
   location: {
     fontSize: 14,
@@ -593,6 +606,96 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
   },
+  salaryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    height: 50,
+  },
+  salaryPrefix: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  salaryInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 0,
+  },
+  salarySuffix: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 4,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  placeholderText: {
+    color: '#999',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#666',
+  },
+  categoryModalContent: {
+    padding: 20,
+  },
+  categoryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  categoryText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  checkmark: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  customCategoryContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+    gap: 10,
+  },
+  customCategoryInput: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    fontSize: 16,
+  },
+  customCategoryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  customCategoryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 // Employer home content (job posting)
@@ -619,6 +722,39 @@ function EmployerHomeContent() {
   }, []);
   
   const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+  
+  const jobCategories = [
+    "Cleaning & Maintenance",
+    "Retail & Sales", 
+    "Food Services",
+    "Warehouse & Logistics",
+    "Customer Service",
+    "Delivery & Transportation",
+    "Healthcare Support",
+    "Administrative Assistant",
+    "Security",
+    "Other"
+  ];
+
+  const handleCategorySelect = (category: string) => {
+    if (category === 'Other') {
+      // Keep modal open for custom input
+      return;
+    }
+    setNewJob(prev => ({ ...prev, jobType: category }));
+    setIsCategoryModalVisible(false);
+  };
+
+  const handleCustomCategorySubmit = () => {
+    if (customCategory.trim()) {
+      setNewJob(prev => ({ ...prev, jobType: customCategory.trim() }));
+      setCustomCategory('');
+      setIsCategoryModalVisible(false);
+    }
+  };
+
   const [newJob, setNewJob] = useState({
     title: '',
     jobType: '',
@@ -632,26 +768,24 @@ function EmployerHomeContent() {
   });
 
   const handlePostJob = async () => {
-    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.minimumSalary.trim()) {
+    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.minimumSalary.trim() || !newJob.jobType.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
     const job = {
-      id: Date.now().toString(),
       title: newJob.title,
       company: 'Your Company', // In real app, get from user profile
-      jobType: newJob.jobType,
+      jobType: newJob.jobType || 'Other', // Default to 'Other' if empty
       location: newJob.location,
-      workingHours: newJob.workingHours,
+      workingHours: {
+        weekday: newJob.workingHours.weekday || '9:00 AM - 5:00 PM',
+        weekend: newJob.workingHours.weekend || 'Off'
+      },
       minimumSalary: newJob.minimumSalary,
-      experienceRequired: newJob.experienceRequired,
-      trainingProvided: newJob.trainingProvided,
-      requiredSkills: newJob.requiredSkills,
-      description: newJob.description,
-      applications: 0,
-      status: 'active',
-      postedDate: new Date().toISOString().split('T')[0],
+      experienceRequired: newJob.experienceRequired || 'No experience needed',
+      trainingProvided: newJob.trainingProvided || 'Training will be provided',
+      requiredSkills: newJob.requiredSkills
     };
 
     try {
@@ -789,18 +923,35 @@ function EmployerHomeContent() {
               value={newJob.title}
               onChangeText={(text) => setNewJob(prev => ({ ...prev, title: text }))}
             />
+            
+            {/* Job Category Dropdown */}
+            <TouchableOpacity
+              style={[styles.modalInput, styles.dropdownButton]}
+              onPress={() => setIsCategoryModalVisible(true)}
+            >
+              <Text style={[styles.dropdownText, !newJob.jobType && styles.placeholderText]}>
+                {newJob.jobType || 'Select Job Category *'}
+              </Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+
             <TextInput
               style={styles.modalInput}
               placeholder="Location *"
               value={newJob.location}
               onChangeText={(text) => setNewJob(prev => ({ ...prev, location: text }))}
             />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Minimum Salary *"
-              value={newJob.minimumSalary}
-              onChangeText={(text) => setNewJob(prev => ({ ...prev, minimumSalary: text }))}
-            />
+            <View style={styles.salaryContainer}>
+              <Text style={styles.salaryPrefix}>$</Text>
+              <TextInput
+                style={styles.salaryInput}
+                placeholder="15-18"
+                value={newJob.minimumSalary}
+                onChangeText={(text) => setNewJob(prev => ({ ...prev, minimumSalary: text }))}
+                keyboardType="numeric"
+              />
+              <Text style={styles.salarySuffix}>per hour *</Text>
+            </View>
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
               placeholder="Job Description"
@@ -817,6 +968,56 @@ function EmployerHomeContent() {
               multiline
               numberOfLines={3}
             />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Category Selection Modal */}
+      <Modal
+        visible={isCategoryModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setIsCategoryModalVisible(false)}>
+              <Text style={styles.modalCancelButton}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            <View style={{ width: 60 }} />
+          </View>
+
+          <View style={styles.categoryModalContent}>
+            {jobCategories.map((category, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.categoryItem}
+                onPress={() => handleCategorySelect(category)}
+              >
+                <Text style={styles.categoryText}>{category}</Text>
+                {newJob.jobType === category && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            
+            {/* Custom category input for "Other" */}
+            {newJob.jobType === 'Other' || jobCategories.includes('Other') ? (
+              <View style={styles.customCategoryContainer}>
+                <TextInput
+                  style={styles.customCategoryInput}
+                  placeholder="Enter custom category"
+                  value={customCategory}
+                  onChangeText={setCustomCategory}
+                />
+                <TouchableOpacity
+                  style={styles.customCategoryButton}
+                  onPress={handleCustomCategorySubmit}
+                >
+                  <Text style={styles.customCategoryButtonText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         </View>
       </Modal>
