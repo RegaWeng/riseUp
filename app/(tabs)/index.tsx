@@ -779,32 +779,7 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
   },
-  customCategoryContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-    gap: 10,
-  },
-  customCategoryInput: {
-    flex: 1,
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    fontSize: 16,
-  },
-  customCategoryButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    justifyContent: 'center',
-  },
-  customCategoryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+
   sectionLabel: {
     fontSize: 16,
     fontWeight: '600',
@@ -886,7 +861,6 @@ function EmployerHomeContent() {
   
   const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-  const [customCategory, setCustomCategory] = useState('');
   const [isSkillsModalVisible, setIsSkillsModalVisible] = useState(false);
   
   const jobCategories = [
@@ -926,20 +900,8 @@ function EmployerHomeContent() {
   ];
 
   const handleCategorySelect = (category: string) => {
-    if (category === 'Other') {
-      // Keep modal open for custom input
-      return;
-    }
     setNewJob(prev => ({ ...prev, jobType: category }));
     setIsCategoryModalVisible(false);
-  };
-
-  const handleCustomCategorySubmit = () => {
-    if (customCategory.trim()) {
-      setNewJob(prev => ({ ...prev, jobType: customCategory.trim() }));
-      setCustomCategory('');
-      setIsCategoryModalVisible(false);
-    }
   };
 
   const handleSkillToggle = (skill: string) => {
@@ -1288,24 +1250,7 @@ function EmployerHomeContent() {
                 )}
               </TouchableOpacity>
             ))}
-            
-            {/* Custom category input for "Other" */}
-            {newJob.jobType === 'Other' || jobCategories.includes('Other') ? (
-              <View style={styles.customCategoryContainer}>
-                <TextInput
-                  style={styles.customCategoryInput}
-                  placeholder="Enter custom category"
-                  value={customCategory}
-                  onChangeText={setCustomCategory}
-                />
-                <TouchableOpacity
-                  style={styles.customCategoryButton}
-                  onPress={handleCustomCategorySubmit}
-                >
-                  <Text style={styles.customCategoryButtonText}>Add</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
+
           </View>
         </View>
       </Modal>
