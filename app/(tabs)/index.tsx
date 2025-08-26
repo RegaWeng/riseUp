@@ -232,9 +232,14 @@ function UserHomeContent() {
       <FlatList
         data={filteredJobs}
         renderItem={renderJobItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || item._id}
         style={styles.jobList}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={false}
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 10
+        }}
       />
     </View>
   );
@@ -573,6 +578,21 @@ const styles = StyleSheet.create({
   activeToggleText: {
     color: 'white',
   },
+  jobSalary: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+  jobDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  contentContainer: {
+    padding: 20,
+  },
 });
 
 // Employer home content (job posting)
@@ -734,8 +754,13 @@ function EmployerHomeContent() {
         <FlatList
           data={jobs}
           renderItem={renderJobItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id || item.id}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10
+          }}
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       </View>
