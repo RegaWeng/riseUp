@@ -15,6 +15,7 @@ const SAMPLE_JOBS = [
     salary: '$15/hour',
     skills: ['customer service', 'cash handling', 'communication'],
     trainingProvided: '2 weeks on-the-job training, customer service skills',
+    noExperienceNeeded: true,
   },
   {
     id: '2',
@@ -24,6 +25,7 @@ const SAMPLE_JOBS = [
     salary: '$18/hour + tips',
     skills: ['driving license', 'navigation', 'time management'],
     trainingProvided: '1 week app training, route optimization',
+    noExperienceNeeded: false,
   },
   {
     id: '3',
@@ -33,6 +35,7 @@ const SAMPLE_JOBS = [
     salary: '$16/hour',
     skills: ['attention to detail', 'physical stamina', 'reliability'],
     trainingProvided: '3 days safety training, equipment use',
+    noExperienceNeeded: true,
   },
   {
     id: '4',
@@ -42,6 +45,7 @@ const SAMPLE_JOBS = [
     salary: '$17/hour',
     skills: ['lifting', 'organization', 'teamwork'],
     trainingProvided: '1 week warehouse operations, safety protocols',
+    noExperienceNeeded: false,
   },
   {
     id: '5',
@@ -51,6 +55,7 @@ const SAMPLE_JOBS = [
     salary: '$14/hour',
     skills: ['food safety', 'multitasking', 'customer service'],
     trainingProvided: '2 weeks food prep training, hygiene standards',
+    noExperienceNeeded: true,
   },
 ];
 
@@ -74,6 +79,7 @@ export default function HomeScreen() {
 function UserHomeContent() {
   const [searchText, setSearchText] = useState("");
   const [removedJobs, setRemovedJobs] = useState<string[]>([]);
+  const [showNoExperienceOnly, setShowNoExperienceOnly] = useState(false);
   
   // Use shared context for saved jobs and job applications
   const { 
@@ -92,12 +98,13 @@ function UserHomeContent() {
 
 
   
-  // Filter jobs based on search text and exclude removed jobs
+  // Filter jobs based on search text, no-experience filter, and exclude removed jobs
   const filteredJobs = SAMPLE_JOBS.filter(job => 
     !removedJobs.includes(job.id) && // Don't show removed jobs
     (job.title.toLowerCase().includes(searchText.toLowerCase()) ||
     job.company.toLowerCase().includes(searchText.toLowerCase()) ||
-    job.skills.some(skill => skill.toLowerCase().includes(searchText.toLowerCase())))
+    job.skills.some(skill => skill.toLowerCase().includes(searchText.toLowerCase()))) &&
+    (!showNoExperienceOnly || job.noExperienceNeeded) // Show only no-experience jobs when filter is on
   );
 
   // Handle job application using shared context
@@ -228,6 +235,24 @@ function UserHomeContent() {
         />
       </View>
 
+      {/* Filter Toggle */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[
+            styles.filterToggle,
+            showNoExperienceOnly && styles.filterToggleActive
+          ]}
+          onPress={() => setShowNoExperienceOnly(!showNoExperienceOnly)}
+        >
+          <Text style={[
+            styles.filterToggleText,
+            showNoExperienceOnly && styles.filterToggleTextActive
+          ]}>
+            ✨ No experience needed
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Job List */}
       <FlatList
         data={filteredJobs}
@@ -271,6 +296,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#ddd',
+  },
+  filterContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  filterToggle: {
+    backgroundColor: 'white',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignSelf: 'flex-start',
+  },
+  filterToggleActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  filterToggleText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  filterToggleTextActive: {
+    color: 'white',
   },
   jobList: {
     flex: 1,
