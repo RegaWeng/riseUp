@@ -60,6 +60,7 @@ function UserHomeContent() {
           salary: job.minimumSalary,
           skills: job.requiredSkills,
           trainingProvided: job.trainingProvided,
+          workingHours: job.workingHours,
           noExperienceNeeded: job.experienceRequired === "No experience needed"
         }));
         setJobs(transformedJobs);
@@ -155,6 +156,17 @@ function UserHomeContent() {
           <Text style={styles.jobType}>📋 {item.jobType}</Text>
         )}
         <Text style={styles.location}>{item.location}</Text>
+        {item.workingHours && (
+          <View style={styles.workingHoursContainer}>
+            <Text style={styles.workingHoursLabel}>🕒 Working Hours:</Text>
+            <Text style={styles.workingHoursText}>
+              Weekdays: {item.workingHours.weekday || 'Not specified'}
+            </Text>
+            <Text style={styles.workingHoursText}>
+              Weekends: {item.workingHours.weekend || 'Not specified'}
+            </Text>
+          </View>
+        )}
         <Text style={styles.salary}>
           {item.salary.includes('$') ? item.salary : `$${item.salary}`}
           {!item.salary.toLowerCase().includes('hour') && !item.salary.toLowerCase().includes('/') ? ' per hour' : ''}
@@ -521,6 +533,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontWeight: 'bold',
+    backgroundColor: '#34C759',
   },
   modalContainer: {
     flex: 1,
@@ -703,6 +716,48 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 8,
   },
+  selectedSkillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    gap: 8,
+  },
+  selectedSkillTag: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  selectedSkillText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  disabledItem: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    color: '#ccc',
+  },
+  workingHoursContainer: {
+    marginVertical: 8,
+    padding: 8,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#28a745',
+  },
+  workingHoursLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#28a745',
+    marginBottom: 4,
+  },
+  workingHoursText: {
+    fontSize: 11,
+    color: '#555',
+    lineHeight: 14,
+  },
 });
 
 // Employer home content (job posting)
@@ -736,6 +791,7 @@ function EmployerHomeContent() {
   const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
+  const [isSkillsModalVisible, setIsSkillsModalVisible] = useState(false);
   
   const jobCategories = [
     "Cleaning & Maintenance",
@@ -748,6 +804,29 @@ function EmployerHomeContent() {
     "Administrative Assistant",
     "Security",
     "Other"
+  ];
+
+  const skillsCategories = [
+    "Basic English",
+    "Customer service",
+    "Cash handling",
+    "Communication",
+    "Physical stamina",
+    "Attention to detail",
+    "Teamwork",
+    "Time management",
+    "Reliability",
+    "Problem solving",
+    "Computer skills",
+    "Driving license",
+    "Food safety",
+    "Equipment operation",
+    "Safety protocols",
+    "Lifting ability",
+    "Organization",
+    "Multitasking",
+    "Phone etiquette",
+    "Clear speaking"
   ];
 
   const handleCategorySelect = (category: string) => {
@@ -765,6 +844,30 @@ function EmployerHomeContent() {
       setCustomCategory('');
       setIsCategoryModalVisible(false);
     }
+  };
+
+  const handleSkillToggle = (skill: string) => {
+    setNewJob(prev => {
+      const currentSkills = prev.requiredSkills;
+      const hasSkill = currentSkills.includes(skill);
+      
+      if (hasSkill) {
+        // Remove skill
+        return {
+          ...prev,
+          requiredSkills: currentSkills.filter(s => s !== skill)
+        };
+      } else {
+        // Add skill if under limit
+        if (currentSkills.length < 3) {
+          return {
+            ...prev,
+            requiredSkills: [...currentSkills, skill]
+          };
+        }
+        return prev; // Don't add if already at limit
+      }
+    });
   };
 
   const [newJob, setNewJob] = useState({
@@ -865,6 +968,17 @@ function EmployerHomeContent() {
         <Text style={styles.jobType}>📋 {item.jobType}</Text>
       )}
       <Text style={styles.location}>{item.location}</Text>
+      {item.workingHours && (
+        <View style={styles.workingHoursContainer}>
+          <Text style={styles.workingHoursLabel}>🕒 Working Hours:</Text>
+          <Text style={styles.workingHoursText}>
+            Weekdays: {item.workingHours.weekday || 'Not specified'}
+          </Text>
+          <Text style={styles.workingHoursText}>
+            Weekends: {item.workingHours.weekend || 'Not specified'}
+          </Text>
+        </View>
+      )}
       <Text style={styles.salary}>
         Minimum {item.minimumSalary && item.minimumSalary.includes('$') ? item.minimumSalary : `$${item.minimumSalary || 'Not specified'}`}
         {item.minimumSalary && !item.minimumSalary.toLowerCase().includes('hour') && !item.minimumSalary.toLowerCase().includes('/') ? '/hour' : ''}
@@ -877,11 +991,13 @@ function EmployerHomeContent() {
           <Text style={styles.statLabel}>Applications</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statText}>Posted: {item.postedDate}</Text>
+          <Text style={styles.statText}>
+            Posted: {item.datePosted ? new Date(item.datePosted).toLocaleDateString() : 'Recently'}
+          </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statusBadge, { backgroundColor: item.status === 'active' ? '#34C759' : '#FF9500' }]}>
-            {item.status}
+          <Text style={styles.statusBadge}>
+            Active
           </Text>
         </View>
       </View>
@@ -1012,6 +1128,32 @@ function EmployerHomeContent() {
               multiline
               numberOfLines={3}
             />
+
+            {/* Required Skills Selector */}
+            <Text style={styles.sectionLabel}>Required Skills (Max 3)</Text>
+            <TouchableOpacity
+              style={[styles.modalInput, styles.dropdownButton]}
+              onPress={() => setIsSkillsModalVisible(true)}
+            >
+              <Text style={[styles.dropdownText, newJob.requiredSkills.length === 0 && styles.placeholderText]}>
+                {newJob.requiredSkills.length > 0 
+                  ? `${newJob.requiredSkills.length} skills selected` 
+                  : 'Select required skills'
+                }
+              </Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+            
+            {/* Show selected skills */}
+            {newJob.requiredSkills.length > 0 && (
+              <View style={styles.selectedSkillsContainer}>
+                {newJob.requiredSkills.map((skill, index) => (
+                  <View key={index} style={styles.selectedSkillTag}>
+                    <Text style={styles.selectedSkillText}>{skill}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -1062,6 +1204,49 @@ function EmployerHomeContent() {
                 </TouchableOpacity>
               </View>
             ) : null}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Skills Selection Modal */}
+      <Modal
+        visible={isSkillsModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setIsSkillsModalVisible(false)}>
+              <Text style={styles.modalCancelButton}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Select Skills ({newJob.requiredSkills.length}/3)</Text>
+            <TouchableOpacity onPress={() => setIsSkillsModalVisible(false)}>
+              <Text style={styles.modalPostButton}>Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.categoryModalContent}>
+            {skillsCategories.map((skill, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.categoryItem,
+                  newJob.requiredSkills.length >= 3 && !newJob.requiredSkills.includes(skill) && styles.disabledItem
+                ]}
+                onPress={() => handleSkillToggle(skill)}
+                disabled={newJob.requiredSkills.length >= 3 && !newJob.requiredSkills.includes(skill)}
+              >
+                <Text style={[
+                  styles.categoryText,
+                  newJob.requiredSkills.length >= 3 && !newJob.requiredSkills.includes(skill) && styles.disabledText
+                ]}>
+                  {skill}
+                </Text>
+                {newJob.requiredSkills.includes(skill) && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </Modal>
