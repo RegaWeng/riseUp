@@ -1,63 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from '../context/AuthContext';
 import { useSaved } from '../context/SavedContext';
+import { apiService } from '../services/api';
 
 
 
-// Sample job data - this would come from an API later
-const SAMPLE_JOBS = [
-  {
-    id: '1',
-    title: 'Cashier',
-    company: 'Metro Grocery',
-    location: 'Downtown',
-    salary: '$15/hour',
-    skills: ['customer service', 'cash handling', 'communication'],
-    trainingProvided: '2 weeks on-the-job training, customer service skills',
-    noExperienceNeeded: true,
-  },
-  {
-    id: '2',
-    title: 'Delivery Driver',
-    company: 'QuickEats',
-    location: 'City Wide',
-    salary: '$18/hour + tips',
-    skills: ['driving license', 'navigation', 'time management'],
-    trainingProvided: '1 week app training, route optimization',
-    noExperienceNeeded: false,
-  },
-  {
-    id: '3',
-    title: 'Cleaner',
-    company: 'CleanCorp',
-    location: 'Various Offices',
-    salary: '$16/hour',
-    skills: ['attention to detail', 'physical stamina', 'reliability'],
-    trainingProvided: '3 days safety training, equipment use',
-    noExperienceNeeded: true,
-  },
-  {
-    id: '4',
-    title: 'Warehouse Worker',
-    company: 'LogiCorp',
-    location: 'Industrial Park',
-    salary: '$17/hour',
-    skills: ['lifting', 'organization', 'teamwork'],
-    trainingProvided: '1 week warehouse operations, safety protocols',
-    noExperienceNeeded: false,
-  },
-  {
-    id: '5',
-    title: 'Food Service',
-    company: 'Burger Palace',
-    location: 'Mall',
-    salary: '$14/hour',
-    skills: ['food safety', 'multitasking', 'customer service'],
-    trainingProvided: '2 weeks food prep training, hygiene standards',
-    noExperienceNeeded: true,
-  },
-];
+// Jobs will be fetched from API
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -80,6 +29,8 @@ function UserHomeContent() {
   const [searchText, setSearchText] = useState("");
   const [removedJobs, setRemovedJobs] = useState<string[]>([]);
   const [showNoExperienceOnly, setShowNoExperienceOnly] = useState(false);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Use shared context for saved jobs and job applications
   const { 
@@ -93,17 +44,41 @@ function UserHomeContent() {
     isJobApplied 
   } = useSaved();
 
-  // Use tab context to update header color
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedJobs = await apiService.getJobs();
+        // Transform backend data to match frontend format
+        const transformedJobs = fetchedJobs.map((job: any) => ({
+          id: job._id,
+          title: job.title,
+          company: job.company,
+          location: job.location,
+          salary: job.minimumSalary,
+          skills: job.requiredSkills,
+          trainingProvided: job.trainingProvided,
+          noExperienceNeeded: job.experienceRequired === "No experience needed"
+        }));
+        setJobs(transformedJobs);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        Alert.alert('Error', 'Failed to load jobs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchJobs();
+  }, []);
 
-
-  
   // Filter jobs based on search text, no-experience filter, and exclude removed jobs
-  const filteredJobs = SAMPLE_JOBS.filter(job => 
+  const filteredJobs = jobs.filter(job => 
     !removedJobs.includes(job.id) && // Don't show removed jobs
     (job.title.toLowerCase().includes(searchText.toLowerCase()) ||
     job.company.toLowerCase().includes(searchText.toLowerCase()) ||
-    job.skills.some(skill => skill.toLowerCase().includes(searchText.toLowerCase()))) &&
+    job.skills.some((skill: string) => skill.toLowerCase().includes(searchText.toLowerCase()))) &&
     (!showNoExperienceOnly || job.noExperienceNeeded) // Show only no-experience jobs when filter is on
   );
 
@@ -602,30 +577,26 @@ const styles = StyleSheet.create({
 
 // Employer home content (job posting)
 function EmployerHomeContent() {
-  const [jobs, setJobs] = useState([
-    {
-      id: '1',
-      title: 'Cashier',
-      company: 'Metro Grocery',
-      location: 'Downtown',
-      salary: '$15/hour',
-      description: 'Looking for a reliable cashier to join our team.',
-      applications: 5,
-      status: 'active',
-      postedDate: '2024-01-15',
-    },
-    {
-      id: '2',
-      title: 'Delivery Driver',
-      company: 'Metro Grocery',
-      location: 'City Wide',
-      salary: '$18/hour + tips',
-      description: 'Experienced drivers needed for food delivery service.',
-      applications: 3,
-      status: 'active',
-      postedDate: '2024-01-10',
-    },
-  ]);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedJobs = await apiService.getJobs();
+        setJobs(fetchedJobs);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        Alert.alert('Error', 'Failed to load jobs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
   
   const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
   const [newJob, setNewJob] = useState({
@@ -640,7 +611,7 @@ function EmployerHomeContent() {
     description: '',
   });
 
-  const handlePostJob = () => {
+  const handlePostJob = async () => {
     if (!newJob.title.trim() || !newJob.location.trim() || !newJob.minimumSalary.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
@@ -663,7 +634,14 @@ function EmployerHomeContent() {
       postedDate: new Date().toISOString().split('T')[0],
     };
 
-    setJobs(prev => [job, ...prev]);
+    try {
+      const createdJob = await apiService.createJob(job);
+      setJobs(prev => [createdJob, ...prev]);
+    } catch (error) {
+      console.error('Error creating job:', error);
+      Alert.alert('Error', 'Failed to create job');
+      return;
+    }
     setNewJob({ 
       title: '', 
       jobType: '', 
@@ -688,7 +666,15 @@ function EmployerHomeContent() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => setJobs(prev => prev.filter(job => job.id !== jobId))
+          onPress: async () => {
+            try {
+              await apiService.deleteJob(jobId);
+              setJobs(prev => prev.filter(job => job._id !== jobId));
+            } catch (error) {
+              console.error('Error deleting job:', error);
+              Alert.alert('Error', 'Failed to delete job');
+            }
+          }
         }
       ]
     );
@@ -700,14 +686,14 @@ function EmployerHomeContent() {
         <Text style={styles.jobTitle}>{item.title}</Text>
         <TouchableOpacity
           style={styles.deleteButton}
-          onPress={() => handleDeleteJob(item.id, item.title)}
+          onPress={() => handleDeleteJob(item._id, item.title)}
         >
           <Text style={styles.deleteButtonText}>✕</Text>
         </TouchableOpacity>
       </View>
       
-      <Text style={styles.jobSalary}>{item.salary}</Text>
-      <Text style={styles.jobDescription}>{item.description}</Text>
+      <Text style={styles.jobSalary}>{item.minimumSalary}</Text>
+      <Text style={styles.jobDescription}>{item.trainingProvided || 'No training information provided'}</Text>
       
       <View style={styles.jobStats}>
         <View style={styles.statItem}>
