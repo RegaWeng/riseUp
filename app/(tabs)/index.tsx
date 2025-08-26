@@ -696,6 +696,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+    marginTop: 8,
+  },
 });
 
 // Employer home content (job posting)
@@ -709,7 +716,12 @@ function EmployerHomeContent() {
       try {
         setIsLoading(true);
         const fetchedJobs = await apiService.getJobs();
-        setJobs(fetchedJobs);
+        // Add applications count for display consistency
+        const jobsWithApplications = fetchedJobs.map((job: any) => ({
+          ...job,
+          applications: job.applications || 0
+        }));
+        setJobs(jobsWithApplications);
       } catch (error) {
         console.error('Error fetching jobs:', error);
         Alert.alert('Error', 'Failed to load jobs');
@@ -790,7 +802,9 @@ function EmployerHomeContent() {
 
     try {
       const createdJob = await apiService.createJob(job);
-      setJobs(prev => [createdJob, ...prev]);
+      // Add applications count for display consistency
+      const jobWithApplications = { ...createdJob, applications: 0 };
+      setJobs(prev => [jobWithApplications, ...prev]);
     } catch (error) {
       console.error('Error creating job:', error);
       Alert.alert('Error', 'Failed to create job');
@@ -846,7 +860,15 @@ function EmployerHomeContent() {
         </TouchableOpacity>
       </View>
       
-      <Text style={styles.jobSalary}>{item.minimumSalary}</Text>
+      <Text style={styles.company}>{item.company}</Text>
+      {item.jobType && (
+        <Text style={styles.jobType}>📋 {item.jobType}</Text>
+      )}
+      <Text style={styles.location}>{item.location}</Text>
+      <Text style={styles.salary}>
+        Minimum {item.minimumSalary && item.minimumSalary.includes('$') ? item.minimumSalary : `$${item.minimumSalary || 'Not specified'}`}
+        {item.minimumSalary && !item.minimumSalary.toLowerCase().includes('hour') && !item.minimumSalary.toLowerCase().includes('/') ? '/hour' : ''}
+      </Text>
       <Text style={styles.jobDescription}>{item.trainingProvided || 'No training information provided'}</Text>
       
       <View style={styles.jobStats}>
@@ -941,6 +963,28 @@ function EmployerHomeContent() {
               value={newJob.location}
               onChangeText={(text) => setNewJob(prev => ({ ...prev, location: text }))}
             />
+            
+            {/* Working Hours */}
+            <Text style={styles.sectionLabel}>Working Hours</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Weekday Hours (e.g. 9:00 AM - 5:00 PM)"
+              value={newJob.workingHours.weekday}
+              onChangeText={(text) => setNewJob(prev => ({ 
+                ...prev, 
+                workingHours: { ...prev.workingHours, weekday: text }
+              }))}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Weekend Hours (e.g. 10:00 AM - 4:00 PM or Off)"
+              value={newJob.workingHours.weekend}
+              onChangeText={(text) => setNewJob(prev => ({ 
+                ...prev, 
+                workingHours: { ...prev.workingHours, weekend: text }
+              }))}
+            />
+            
             <View style={styles.salaryContainer}>
               <Text style={styles.salaryPrefix}>$</Text>
               <TextInput
