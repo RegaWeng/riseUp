@@ -630,14 +630,18 @@ function EmployerHomeContent() {
   const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
   const [newJob, setNewJob] = useState({
     title: '',
+    jobType: '',
     location: '',
-    salary: '',
-    description: '',
+    workingHours: { weekday: '', weekend: '' },
+    minimumSalary: '',
+    experienceRequired: '',
     trainingProvided: '',
+    requiredSkills: ['Basic English'],
+    description: '',
   });
 
   const handlePostJob = () => {
-    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.salary.trim()) {
+    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.minimumSalary.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
@@ -646,17 +650,31 @@ function EmployerHomeContent() {
       id: Date.now().toString(),
       title: newJob.title,
       company: 'Your Company', // In real app, get from user profile
+      jobType: newJob.jobType,
       location: newJob.location,
-      salary: newJob.salary,
-      description: newJob.description,
+      workingHours: newJob.workingHours,
+      minimumSalary: newJob.minimumSalary,
+      experienceRequired: newJob.experienceRequired,
       trainingProvided: newJob.trainingProvided,
+      requiredSkills: newJob.requiredSkills,
+      description: newJob.description,
       applications: 0,
       status: 'active',
       postedDate: new Date().toISOString().split('T')[0],
     };
 
     setJobs(prev => [job, ...prev]);
-    setNewJob({ title: '', location: '', salary: '', description: '', trainingProvided: '' });
+    setNewJob({ 
+      title: '', 
+      jobType: '', 
+      location: '', 
+      workingHours: { weekday: '', weekend: '' },
+      minimumSalary: '', 
+      experienceRequired: '', 
+      trainingProvided: '', 
+      requiredSkills: ['Basic English'],
+      description: '' 
+    });
     setIsPostJobModalVisible(false);
     Alert.alert('Success', 'Job posted successfully!');
   };
@@ -768,9 +786,9 @@ function EmployerHomeContent() {
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="Salary *"
-              value={newJob.salary}
-              onChangeText={(text) => setNewJob(prev => ({ ...prev, salary: text }))}
+              placeholder="Minimum Salary *"
+              value={newJob.minimumSalary}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, minimumSalary: text }))}
             />
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}

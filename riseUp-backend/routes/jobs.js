@@ -55,16 +55,12 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE job by ID (soft delete - sets isActive to false)
+// DELETE job by ID (hard delete - permanently removes from database)
 router.delete('/:id', async (req, res) => {
     try {
-        const job = await Job.findByIdAndUpdate(
-            req.params.id,
-            { isActive: false },
-            { new: true }
-        );
+        const job = await Job.findByIdAndDelete(req.params.id);
         if (job) {
-            res.json({ message: 'Job deleted successfully' });
+            res.json({ message: 'Job permanently deleted successfully' });
         } else {
             res.status(404).json({ message: 'Job not found' });
         }
