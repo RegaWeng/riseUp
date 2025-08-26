@@ -142,6 +142,7 @@ export const SavedProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
   const [completedVideos, setCompletedVideos] = useState<string[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load data from localStorage based on current user type
   useEffect(() => {
@@ -159,31 +160,40 @@ export const SavedProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setSavedVideos(storedSavedVideos);
       setCompletedVideos(storedCompletedVideos);
       setAppliedJobs(storedAppliedJobs);
+      setIsInitialized(true);
     };
     
     loadStoredData();
   }, [getCurrentUserType]);
 
-  // Save to localStorage whenever data changes
+  // Save to localStorage whenever data changes - but only after initial load is complete
   useEffect(() => {
-    const userType = getCurrentUserType();
-    saveSavedJobs(userType, savedJobs);
-  }, [savedJobs, getCurrentUserType]);
+    if (isInitialized) {
+      const userType = getCurrentUserType();
+      saveSavedJobs(userType, savedJobs);
+    }
+  }, [savedJobs, isInitialized]);
 
   useEffect(() => {
-    const userType = getCurrentUserType();
-    saveSavedVideos(userType, savedVideos);
-  }, [savedVideos, getCurrentUserType]);
+    if (isInitialized) {
+      const userType = getCurrentUserType();
+      saveSavedVideos(userType, savedVideos);
+    }
+  }, [savedVideos, isInitialized]);
 
   useEffect(() => {
-    const userType = getCurrentUserType();
-    saveCompletedVideos(userType, completedVideos);
-  }, [completedVideos, getCurrentUserType]);
+    if (isInitialized) {
+      const userType = getCurrentUserType();
+      saveCompletedVideos(userType, completedVideos);
+    }
+  }, [completedVideos, isInitialized]);
 
   useEffect(() => {
-    const userType = getCurrentUserType();
-    saveAppliedJobs(userType, appliedJobs);
-  }, [appliedJobs, getCurrentUserType]);
+    if (isInitialized) {
+      const userType = getCurrentUserType();
+      saveAppliedJobs(userType, appliedJobs);
+    }
+  }, [appliedJobs, isInitialized]);
 
   // Save a job
   const saveJob = (job: SavedJob) => {

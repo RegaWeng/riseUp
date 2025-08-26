@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 import { useAuth } from './AuthContext';
 
 interface AdminContextType {
@@ -16,13 +16,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   
   const isAdminView = user?.type === 'admin';
   
-  // Get the effective user type for storage operations
-  const getCurrentUserType = (): 'user' | 'employer' => {
+  // Get the effective user type for storage operations - memoized to prevent unnecessary re-renders
+  const getCurrentUserType = useCallback((): 'user' | 'employer' => {
     if (user?.type === 'admin') {
       return viewMode; // Admin can switch between views
     }
     return user?.type === 'employer' ? 'employer' : 'user';
-  };
+  }, [user?.type, viewMode]);
 
   return (
     <AdminContext.Provider value={{

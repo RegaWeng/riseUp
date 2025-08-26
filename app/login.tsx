@@ -1,16 +1,16 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from './context/AuthContext';
 
@@ -40,7 +40,28 @@ export default function LoginScreen() {
     }
   };
 
+  const handleDevLogin = async (userType: 'user' | 'employer' | 'admin') => {
+    const devCredentials = {
+      user: { email: 'alibaba@example.com', password: 'alibaba123' },
+      employer: { email: 'yourboss@company.com', password: 'yourboss123' },
+      admin: { email: 'admin@riseup.com', password: 'admin123' },
+    };
 
+    const { email: devEmail, password: devPassword } = devCredentials[userType];
+    
+    try {
+      const success = await login(devEmail, devPassword);
+      if (success) {
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 100);
+      } else {
+        Alert.alert('Dev Login Failed', 'Dev accounts not set up yet.');
+      }
+    } catch (error) {
+      Alert.alert('Dev Login Failed', 'Network error. Please check your connection.');
+    }
+  };
 
   return (
     <KeyboardAvoidingView 
@@ -105,13 +126,38 @@ export default function LoginScreen() {
              )}
            </TouchableOpacity>
 
-           {/* Register Button */}
-           <TouchableOpacity
-             style={styles.registerButton}
-             onPress={() => router.push('/register')}
-           >
-             <Text style={styles.registerButtonText}>Create New Account</Text>
-           </TouchableOpacity>
+                     {/* Register Button */}
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={() => router.push('/register')}
+          >
+            <Text style={styles.registerButtonText}>Create New Account</Text>
+          </TouchableOpacity>
+
+          {/* Dev Login Buttons */}
+          <View style={styles.devSection}>
+            <Text style={styles.devTitle}>Quick Dev Login:</Text>
+            <View style={styles.devButtonsRow}>
+              <TouchableOpacity
+                style={styles.devButton}
+                onPress={() => handleDevLogin('user')}
+              >
+                <Text style={styles.devButtonText}>User</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.devButton}
+                onPress={() => handleDevLogin('employer')}
+              >
+                <Text style={styles.devButtonText}>Employer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.devButton}
+                onPress={() => handleDevLogin('admin')}
+              >
+                <Text style={styles.devButtonText}>Admin</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* Footer */}
@@ -241,9 +287,42 @@ const styles = StyleSheet.create({
      borderWidth: 2,
      borderColor: '#007AFF',
    },
-   registerButtonText: {
-     color: '#007AFF',
-     fontSize: 16,
-     fontWeight: 'bold',
-   },
+     registerButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  devSection: {
+    marginTop: 30,
+    padding: 15,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  devTitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 10,
+    fontWeight: '600',
+  },
+  devButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  devButton: {
+    flex: 1,
+    backgroundColor: '#666',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  devButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });

@@ -14,6 +14,7 @@ const SAMPLE_JOBS = [
     location: 'Downtown',
     salary: '$15/hour',
     skills: ['customer service', 'cash handling', 'communication'],
+    trainingProvided: '2 weeks on-the-job training, customer service skills',
   },
   {
     id: '2',
@@ -22,6 +23,7 @@ const SAMPLE_JOBS = [
     location: 'City Wide',
     salary: '$18/hour + tips',
     skills: ['driving license', 'navigation', 'time management'],
+    trainingProvided: '1 week app training, route optimization',
   },
   {
     id: '3',
@@ -30,6 +32,7 @@ const SAMPLE_JOBS = [
     location: 'Various Offices',
     salary: '$16/hour',
     skills: ['attention to detail', 'physical stamina', 'reliability'],
+    trainingProvided: '3 days safety training, equipment use',
   },
   {
     id: '4',
@@ -38,6 +41,7 @@ const SAMPLE_JOBS = [
     location: 'Industrial Park',
     salary: '$17/hour',
     skills: ['lifting', 'organization', 'teamwork'],
+    trainingProvided: '1 week warehouse operations, safety protocols',
   },
   {
     id: '5',
@@ -46,6 +50,7 @@ const SAMPLE_JOBS = [
     location: 'Mall',
     salary: '$14/hour',
     skills: ['food safety', 'multitasking', 'customer service'],
+    trainingProvided: '2 weeks food prep training, hygiene standards',
   },
 ];
 
@@ -129,31 +134,7 @@ function UserHomeContent() {
     console.log(`Job removed: ${jobTitle}`);
   };
 
-  // Handle saving job using shared context
-  const handleSaveJob = (jobId: string, jobTitle: string) => {
-    const job = SAMPLE_JOBS.find(j => j.id === jobId);
-    if (!job) return;
 
-    if (isJobSaved(jobId)) {
-      // Already saved - unsave it
-      unsaveJob(jobId);
-      console.log(`Job unsaved: ${jobTitle}`);
-    } else {
-      // Not saved - save it
-      const savedJob = {
-        id: job.id,
-        title: job.title,
-        company: job.company,
-        location: job.location,
-        salary: job.salary,
-        skills: job.skills,
-        savedDate: new Date().toISOString(),
-        type: 'job' as const,
-      };
-      saveJob(savedJob);
-      console.log(`Job saved: ${jobTitle}`);
-    }
-  };
 
   // Calculate counts for status display
   const applicationCount = appliedJobs.length;
@@ -198,6 +179,13 @@ function UserHomeContent() {
           ))}
         </View>
         
+        {item.trainingProvided && (
+          <View style={styles.trainingContainer}>
+            <Text style={styles.trainingLabel}>🎓 Training Provided:</Text>
+            <Text style={styles.trainingText}>{item.trainingProvided}</Text>
+          </View>
+        )}
+        
         <View style={styles.buttonContainer}>
           {hasApplied ? (
             <TouchableOpacity 
@@ -214,15 +202,7 @@ function UserHomeContent() {
               <Text style={styles.applyButtonText}>Apply Now</Text>
             </TouchableOpacity>
           )}
-          
-          <TouchableOpacity 
-            style={[styles.saveButton, isSaved && styles.savedButton]}
-            onPress={() => handleSaveJob(item.id, item.title)}
-          >
-            <Text style={[styles.saveButtonText, isSaved && styles.savedButtonText]}>
-              {isSaved ? '✓ Saved' : 'Save'}
-            </Text>
-          </TouchableOpacity>
+
         </View>
       </View>
     );
@@ -373,6 +353,26 @@ const styles = StyleSheet.create({
   skillText: {
     fontSize: 12,
     color: '#666',
+  },
+  trainingContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  trainingLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 4,
+  },
+  trainingText: {
+    fontSize: 12,
+    color: '#555',
+    lineHeight: 16,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -583,6 +583,7 @@ function EmployerHomeContent() {
     location: '',
     salary: '',
     description: '',
+    trainingProvided: '',
   });
 
   const handlePostJob = () => {
@@ -598,13 +599,14 @@ function EmployerHomeContent() {
       location: newJob.location,
       salary: newJob.salary,
       description: newJob.description,
+      trainingProvided: newJob.trainingProvided,
       applications: 0,
       status: 'active',
       postedDate: new Date().toISOString().split('T')[0],
     };
 
     setJobs(prev => [job, ...prev]);
-    setNewJob({ title: '', location: '', salary: '', description: '' });
+    setNewJob({ title: '', location: '', salary: '', description: '', trainingProvided: '' });
     setIsPostJobModalVisible(false);
     Alert.alert('Success', 'Job posted successfully!');
   };
@@ -727,6 +729,14 @@ function EmployerHomeContent() {
               onChangeText={(text) => setNewJob(prev => ({ ...prev, description: text }))}
               multiline
               numberOfLines={4}
+            />
+            <TextInput
+              style={[styles.modalInput, styles.modalTextArea]}
+              placeholder="Training you'll provide (e.g. 2 weeks on-the-job training, skills you'll teach)"
+              value={newJob.trainingProvided}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, trainingProvided: text }))}
+              multiline
+              numberOfLines={3}
             />
           </View>
         </View>
