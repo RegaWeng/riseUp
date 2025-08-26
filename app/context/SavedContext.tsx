@@ -1,4 +1,5 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { apiService } from '../services/api';
 import {
     getAppliedJobs,
     getCompletedVideos,
@@ -250,14 +251,24 @@ export const SavedProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   // Apply to a job
-  const applyToJob = (jobId: string) => {
-    setAppliedJobs(prev => {
-      if (prev.includes(jobId)) {
-        return prev; // Already applied
-      }
-      console.log(`Applied to job: ${jobId}`);
-      return [...prev, jobId];
-    });
+  const applyToJob = async (jobId: string) => {
+    if (appliedJobs.includes(jobId)) {
+      return; // Already applied
+    }
+
+    try {
+      // Send application to backend
+      await apiService.createApplication(jobId);
+      
+      // Update local state
+      setAppliedJobs(prev => {
+        console.log(`Applied to job: ${jobId}`);
+        return [...prev, jobId];
+      });
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      throw error; // Let the UI handle the error
+    }
   };
 
   // Withdraw job application

@@ -85,14 +85,20 @@ function UserHomeContent() {
   );
 
   // Handle job application using shared context
-  const handleApply = (jobId: string, jobTitle: string) => {
+  const handleApply = async (jobId: string, jobTitle: string) => {
     if (isJobApplied(jobId)) {
       console.log(`Already applied to ${jobTitle}`);
       return;
     }
 
-    applyToJob(jobId);
-    console.log(`Application submitted for ${jobTitle}`);
+    try {
+      await applyToJob(jobId);
+      console.log(`Application submitted for ${jobTitle}`);
+      Alert.alert('Success', 'Application submitted successfully!');
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      Alert.alert('Error', 'Failed to submit application. Please try again.');
+    }
   };
 
   // Handle withdrawing application using shared context
@@ -135,10 +141,16 @@ function UserHomeContent() {
           <Text style={styles.jobTitle}>{item.title}</Text>
           <View style={styles.jobActions}>
             <TouchableOpacity 
-              style={styles.starButton}
+              style={[
+                styles.starButton,
+                isSaved && styles.savedStarButton
+              ]}
               onPress={() => isSaved ? unsaveJob(item.id) : saveJob(item)}
             >
-              <Text style={styles.starButtonText}>
+              <Text style={[
+                styles.starButtonText,
+                isSaved && styles.savedStarButtonText
+              ]}>
                 {isSaved ? '★' : '☆'}
               </Text>
             </TouchableOpacity>
@@ -363,12 +375,25 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   starButton: {
-    padding: 5,
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  savedStarButton: {
+    backgroundColor: '#FFD700',
+    borderColor: '#FFD700',
   },
   starButtonText: {
-    color: '#FFD700',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#ccc',
+  },
+  savedStarButtonText: {
+    color: '#FFF',
   },
   company: {
     fontSize: 16,

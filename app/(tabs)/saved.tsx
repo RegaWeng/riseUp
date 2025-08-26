@@ -24,14 +24,18 @@ export default function SavedScreen() {
 
 
   // Handle job application from saved list using shared context
-  const handleApplyToSavedJob = (jobId: string, jobTitle: string) => {
+  const handleApplyToSavedJob = async (jobId: string, jobTitle: string) => {
     if (isJobApplied(jobId)) {
       console.log(`Already applied to ${jobTitle}`);
       return;
     }
     
-    applyToJob(jobId);
-    console.log(`Applied to saved job: ${jobTitle}`);
+    try {
+      await applyToJob(jobId);
+      console.log(`Applied to saved job: ${jobTitle}`);
+    } catch (error) {
+      console.error('Error applying to saved job:', error);
+    }
   };
 
   // Handle video completion from saved list using shared context

@@ -315,8 +315,8 @@ function EmployerTrainingContent() {
     <View style={styles.videoCard}>
       <View style={styles.videoHeader}>
         <View style={styles.videoInfo}>
-          <Text style={styles.videoTitle}>{item.user.name}</Text>
-          <Text style={styles.videoCategory}>{item.user.email}</Text>
+          <Text style={styles.videoTitle}>{item.user?.name || 'Unknown User'}</Text>
+          <Text style={styles.videoCategory}>{item.user?.email || 'No email'}</Text>
         </View>
         <View style={styles.videoHeaderButtons}>
           <View style={[
@@ -329,10 +329,10 @@ function EmployerTrainingContent() {
       </View>
       
       <Text style={styles.videoDescription}>
-        Applied for: {item.job.title} at {item.job.company}
+        Applied for: {item.job?.title || 'Unknown Job'} at {item.job?.company || 'Unknown Company'}
       </Text>
       <Text style={styles.videoDescription}>
-        Location: {item.job.location}
+        Location: {item.job?.location || 'Unknown Location'}
       </Text>
       <Text style={styles.videoDescription}>
         Applied: {new Date(item.appliedDate).toLocaleDateString()}
