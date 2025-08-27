@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../context/AuthContext";
-import { useSaved } from "../context/SavedContext";
+import { useAuth } from "../../context/AuthContext";
+import { useSaved } from "../../context/SavedContext";
 
 
 // User profile data - in a real app, this would come from user authentication/profile

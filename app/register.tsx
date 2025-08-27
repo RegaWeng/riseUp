@@ -12,7 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { useAuth, UserType } from './context/AuthContext';
+import { useAuth, UserType } from '../context/AuthContext';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');

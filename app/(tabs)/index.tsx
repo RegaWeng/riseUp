@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useAuth } from '../context/AuthContext';
-import { useSaved } from '../context/SavedContext';
-import { apiService } from '../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { useSaved } from '../../context/SavedContext';
+import { apiService } from '../../services/api';
 
 
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useAuth } from '../context/AuthContext';
-import { TRAINING_DATA, useSaved } from "../context/SavedContext";
-import { apiService, Application } from '../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { TRAINING_DATA, useSaved } from "../../context/SavedContext";
+import { apiService, Application } from '../../services/api';
 
 
 const SKILL_CATEGORIES = [

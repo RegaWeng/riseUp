@@ -1,6 +1,6 @@
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { AdminToggle } from "../components/AdminToggle";
-import { useSaved } from "../context/SavedContext";
+import { AdminToggle } from "../../components/AdminToggle";
+import { useSaved } from "../../context/SavedContext";
 
 
 export default function SavedScreen() {
