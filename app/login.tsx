@@ -49,19 +49,26 @@ export default function LoginScreen() {
 
     const { email: devEmail, password: devPassword } = devCredentials[userType];
     
+    console.log('Attempting dev login with:', { email: devEmail, userType });
+    
     try {
       const success = await login(devEmail, devPassword);
+      console.log('Dev login result:', success);
       if (success) {
         setTimeout(() => {
           router.replace('/(tabs)');
         }, 100);
       } else {
-        Alert.alert('Dev Login Failed', 'Dev accounts not set up yet.');
+        Alert.alert('Dev Login Failed', 'Login failed - check console for details.');
       }
     } catch (error) {
-      Alert.alert('Dev Login Failed', 'Network error. Please check your connection.');
+      console.error('Dev Login Failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      Alert.alert('Dev Login Failed', `Error: ${errorMessage}`);
     }
   };
+
+
 
   return (
     <KeyboardAvoidingView 
@@ -134,30 +141,32 @@ export default function LoginScreen() {
             <Text style={styles.registerButtonText}>Create New Account</Text>
           </TouchableOpacity>
 
-          {/* Dev Login Buttons */}
-          <View style={styles.devSection}>
-            <Text style={styles.devTitle}>Quick Dev Login:</Text>
-            <View style={styles.devButtonsRow}>
-              <TouchableOpacity
-                style={styles.devButton}
-                onPress={() => handleDevLogin('user')}
-              >
-                <Text style={styles.devButtonText}>User</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.devButton}
-                onPress={() => handleDevLogin('employer')}
-              >
-                <Text style={styles.devButtonText}>Employer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.devButton}
-                onPress={() => handleDevLogin('admin')}
-              >
-                <Text style={styles.devButtonText}>Admin</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                     {/* Dev Login Buttons */}
+           <View style={styles.devSection}>
+             <Text style={styles.devTitle}>Quick Dev Login:</Text>
+             <View style={styles.devButtonsRow}>
+               <TouchableOpacity
+                 style={styles.devButton}
+                 onPress={() => handleDevLogin('user')}
+               >
+                 <Text style={styles.devButtonText}>User</Text>
+               </TouchableOpacity>
+               <TouchableOpacity
+                 style={styles.devButton}
+                 onPress={() => handleDevLogin('employer')}
+               >
+                 <Text style={styles.devButtonText}>Employer</Text>
+               </TouchableOpacity>
+               <TouchableOpacity
+                 style={styles.devButton}
+                 onPress={() => handleDevLogin('admin')}
+               >
+                 <Text style={styles.devButtonText}>Admin</Text>
+               </TouchableOpacity>
+             </View>
+           </View>
+
+
         </View>
 
         {/* Footer */}

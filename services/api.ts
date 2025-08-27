@@ -1,11 +1,6 @@
-import { Platform } from 'react-native';
 
-const API_BASE_URL =
-  Platform.select({
-    ios: 'http://localhost:3000/api',           // iOS Simulator
-    android: 'http://10.0.2.2:3000/api',        // Android Emulator
-    default: 'http://192.168.0.207:3000/api',  // Real device - replace with your PC IP
-  })!;
+// For real device testing, use your PC's IP address
+const API_BASE_URL = 'http://192.168.0.207:3000/api';
 
 // Types
 export interface Job {
@@ -100,6 +95,9 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
+    console.log('API Request URL:', url);
+    console.log('API Base URL:', this.baseURL);
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
@@ -116,16 +114,22 @@ class ApiService {
     };
 
     try {
+      console.log('Making API request to:', url);
       const response = await fetch(url, config);
+      console.log('API Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('API Error response:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('API Response data:', data);
+      return data;
     } catch (error) {
       console.error('API request failed:', error);
+      console.error('Request URL was:', url);
       throw error;
     }
   }
