@@ -13,6 +13,7 @@ import {
     View,
 } from 'react-native';
 import { useAuth, UserType } from '../context/AuthContext';
+import { autoCorrectEmail, autoCorrectName, validateEmail, validateName } from '../utils/validation';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -21,8 +22,48 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedUserType, setSelectedUserType] = useState<UserType>('user');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [nameError, setNameError] = useState('');
 
   const { register } = useAuth();
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    setEmailError(''); // Clear error when user types
+  };
+
+  const handleEmailBlur = () => {
+    // Auto-correct email on blur
+    const correctedEmail = autoCorrectEmail(email);
+    if (correctedEmail !== email) {
+      setEmail(correctedEmail);
+    }
+    
+    // Validate email
+    const validation = validateEmail(correctedEmail);
+    if (!validation.isValid) {
+      setEmailError(validation.message || '');
+    }
+  };
+
+  const handleNameChange = (text: string) => {
+    setName(text);
+    setNameError(''); // Clear error when user types
+  };
+
+  const handleNameBlur = () => {
+    // Auto-correct name on blur
+    const correctedName = autoCorrectName(name);
+    if (correctedName !== name) {
+      setName(correctedName);
+    }
+    
+    // Validate name
+    const validation = validateName(correctedName);
+    if (!validation.isValid) {
+      setNameError(validation.message || '');
+    }
+  };
 
   const userTypes: { type: UserType; label: string; description: string; color: string }[] = [
     {
@@ -46,7 +87,21 @@ export default function RegisterScreen() {
   ];
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+    // Validate name first
+    const nameValidation = validateName(name);
+    if (!nameValidation.isValid) {
+      setNameError(nameValidation.message || '');
+      return;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.message || '');
+      return;
+    }
+
+    if (!password.trim() || !confirmPassword.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -137,26 +192,30 @@ export default function RegisterScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Full Name</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, nameError && styles.inputError]}
               value={name}
-              onChangeText={setName}
+              onChangeText={handleNameChange}
+              onBlur={handleNameBlur}
               placeholder="Enter your full name"
               autoCapitalize="words"
               autoCorrect={false}
             />
+            {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, emailError && styles.inputError]}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
+              onBlur={handleEmailBlur}
               placeholder="Enter your email"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
           </View>
 
           <View style={styles.inputContainer}>
@@ -318,5 +377,15 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 16,
     fontWeight: '500',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+    borderWidth: 2,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });

@@ -13,15 +13,43 @@ import {
     View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { autoCorrectEmail, validateEmail } from '../utils/validation';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
   const { login, isLoading } = useAuth();
 
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    setEmailError(''); // Clear error when user types
+  };
+
+  const handleEmailBlur = () => {
+    // Auto-correct email on blur
+    const correctedEmail = autoCorrectEmail(email);
+    if (correctedEmail !== email) {
+      setEmail(correctedEmail);
+    }
+    
+    // Validate email
+    const validation = validateEmail(correctedEmail);
+    if (!validation.isValid) {
+      setEmailError(validation.message || '');
+    }
+  };
+
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+    // Validate email first
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.message || '');
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password');
       return;
     }
 
@@ -91,14 +119,16 @@ export default function LoginScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, emailError && styles.inputError]}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
+              onBlur={handleEmailBlur}
               placeholder="Enter your email"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
           </View>
 
           <View style={styles.inputContainer}>
@@ -333,5 +363,15 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+    borderWidth: 2,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });

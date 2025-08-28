@@ -3,6 +3,7 @@ import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, 
 import { useAuth } from '../../context/AuthContext';
 import { useSaved } from '../../context/SavedContext';
 import { apiService } from '../../services/api';
+import { validateJobTitle, validateLocation, validateSalary } from '../../utils/validation';
 
 
 
@@ -61,7 +62,8 @@ function UserHomeContent() {
           skills: job.requiredSkills,
           trainingProvided: job.trainingProvided,
           workingHours: job.workingHours,
-          noExperienceNeeded: job.experienceRequired === "No experience needed"
+          noExperienceNeeded: job.experienceRequired === "No experience needed",
+          status: job.status || 'approved' // Default existing jobs to approved
         }));
         setJobs(transformedJobs);
       } catch (error) {
@@ -163,6 +165,13 @@ function UserHomeContent() {
           </TouchableOpacity>
           </View>
         </View>
+        
+        {/* Pending Status Indicator */}
+        {item.status === 'pending' && (
+          <View style={styles.pendingStatusContainer}>
+            <Text style={styles.pendingStatusText}>⏳ Pending Approval</Text>
+          </View>
+        )}
         
         <Text style={styles.company}>{item.company}</Text>
         {item.jobType && (
@@ -829,6 +838,186 @@ const styles = StyleSheet.create({
     color: '#555',
     lineHeight: 14,
   },
+  inputError: {
+    borderColor: '#FF3B30',
+    borderWidth: 2,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  hoursContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  hoursLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    minWidth: 100,
+  },
+  hoursInput: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    textAlign: 'center',
+  },
+  hoursSuffix: {
+    fontSize: 14,
+    color: '#666',
+    minWidth: 40,
+  },
+  offButton: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  offButtonText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  pendingStatusContainer: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  pendingStatusText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  dropdownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  dropdownLabel: {
+    fontSize: 12,
+    color: '#666',
+    minWidth: 30,
+  },
+  dropdown: {
+    backgroundColor: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    minWidth: 40,
+    alignItems: 'center',
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  disabledDropdown: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#ddd',
+  },
+  disabledText: {
+    color: '#999',
+  },
+  offButtonActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  offButtonTextActive: {
+    color: 'white',
+  },
+  numberPickerContent: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  numberGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 15,
+  },
+  numberButton: {
+    width: 60,
+    height: 60,
+    backgroundColor: '#007AFF',
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 5,
+  },
+  numberButtonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  selectedNumberButton: {
+    backgroundColor: '#34C759',
+  },
+  selectedNumberButtonText: {
+    color: 'white',
+  },
+  timeDisplay: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  timeDisplayText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  periodSelector: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 20,
+  },
+  periodButton: {
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    backgroundColor: 'white',
+  },
+  periodButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  selectedPeriodButton: {
+    backgroundColor: '#007AFF',
+  },
+  selectedPeriodButtonText: {
+    color: 'white',
+  },
+  confirmButton: {
+    backgroundColor: '#34C759',
+    paddingHorizontal: 40,
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  confirmButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
 });
 
 // Employer home content (job posting)
@@ -932,7 +1121,7 @@ function EmployerHomeContent() {
     title: '',
     jobType: '',
     location: '',
-    workingHours: { weekday: '', weekend: '' },
+    workingHours: { weekday: '8AM-5PM', weekend: '0AM-0AM' },
     minimumSalary: '',
     experienceRequired: '',
     trainingProvided: '',
@@ -940,9 +1129,134 @@ function EmployerHomeContent() {
     description: '',
   });
 
+  // Weekend toggle state
+  const [isWeekendOff, setIsWeekendOff] = useState(false);
+  
+  // Number picker modal state
+  const [isNumberPickerVisible, setIsNumberPickerVisible] = useState(false);
+  const [currentPicker, setCurrentPicker] = useState<{
+    type: 'weekday' | 'weekend';
+    field: 'start' | 'end';
+  } | null>(null);
+  const [selectedTime, setSelectedTime] = useState<{
+    hour: number;
+    period: 'AM' | 'PM';
+  }>({ hour: 8, period: 'AM' });
+  
+  // Validation state
+  const [titleError, setTitleError] = useState('');
+  const [locationError, setLocationError] = useState('');
+  const [salaryError, setSalaryError] = useState('');
+
+  // Validation handlers
+  const handleTitleChange = (text: string) => {
+    setNewJob(prev => ({ ...prev, title: text }));
+    setTitleError(''); // Clear error when user types
+  };
+
+  const handleTitleBlur = () => {
+    const validation = validateJobTitle(newJob.title);
+    if (!validation.isValid) {
+      setTitleError(validation.message || '');
+    }
+  };
+
+  const handleLocationChange = (text: string) => {
+    setNewJob(prev => ({ ...prev, location: text }));
+    setLocationError(''); // Clear error when user types
+  };
+
+  const handleLocationBlur = () => {
+    const validation = validateLocation(newJob.location);
+    if (!validation.isValid) {
+      setLocationError(validation.message || '');
+    }
+  };
+
+  const handleSalaryChange = (text: string) => {
+    setNewJob(prev => ({ ...prev, minimumSalary: text }));
+    setSalaryError(''); // Clear error when user types
+  };
+
+  const handleSalaryBlur = () => {
+    const validation = validateSalary(newJob.minimumSalary);
+    if (!validation.isValid) {
+      setSalaryError(validation.message || '');
+    }
+  };
+
+  // Number picker handlers
+  const openNumberPicker = (type: 'weekday' | 'weekend', field: 'start' | 'end') => {
+    if (type === 'weekend' && isWeekendOff) return; // Don't allow editing when weekend is off
+    setCurrentPicker({ type, field });
+    
+    // Initialize selected time based on current value
+    const currentHours = newJob.workingHours[type];
+    const timePart = field === 'start' ? currentHours.split('-')[0] : currentHours.split('-')[1];
+    const hour = parseInt(timePart.replace(/[^\d]/g, '')) || 8;
+    const period = timePart.includes('PM') ? 'PM' : 'AM';
+    
+    setSelectedTime({ hour, period });
+    setIsNumberPickerVisible(true);
+  };
+
+  const selectNumber = (number: number) => {
+    setSelectedTime(prev => ({ ...prev, hour: number }));
+  };
+
+  const selectPeriod = (period: 'AM' | 'PM') => {
+    setSelectedTime(prev => ({ ...prev, period }));
+  };
+
+  const confirmTimeSelection = () => {
+    if (!currentPicker) return;
+    
+    const { type, field } = currentPicker;
+    const currentHours = newJob.workingHours[type];
+    const [start, end] = currentHours.split('-');
+    
+    const newTime = `${selectedTime.hour}${selectedTime.period}`;
+    let newHours;
+    if (field === 'start') {
+      newHours = `${newTime}-${end}`;
+    } else {
+      newHours = `${start}-${newTime}`;
+    }
+    
+    setNewJob(prev => ({
+      ...prev,
+      workingHours: {
+        ...prev.workingHours,
+        [type]: newHours
+      }
+    }));
+    
+    setIsNumberPickerVisible(false);
+    setCurrentPicker(null);
+  };
+
   const handlePostJob = async () => {
-    if (!newJob.title.trim() || !newJob.location.trim() || !newJob.minimumSalary.trim() || !newJob.jobType.trim()) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    // Validate all required fields
+    const titleValidation = validateJobTitle(newJob.title);
+    if (!titleValidation.isValid) {
+      setTitleError(titleValidation.message || '');
+      return;
+    }
+
+    const locationValidation = validateLocation(newJob.location);
+    if (!locationValidation.isValid) {
+      setLocationError(locationValidation.message || '');
+      return;
+    }
+
+    const salaryValidation = validateSalary(newJob.minimumSalary);
+    if (!salaryValidation.isValid) {
+      setSalaryError(salaryValidation.message || '');
+      return;
+    }
+
+    if (!newJob.jobType.trim()) {
+      Alert.alert('Error', 'Please select a job category');
       return;
     }
 
@@ -952,19 +1266,24 @@ function EmployerHomeContent() {
       jobType: newJob.jobType || 'Other', // Default to 'Other' if empty
       location: newJob.location,
       workingHours: {
-        weekday: newJob.workingHours.weekday || '9:00 AM - 5:00 PM',
-        weekend: newJob.workingHours.weekend || 'Off'
+        weekday: newJob.workingHours.weekday || '8AM-5PM',
+        weekend: isWeekendOff ? 'Off' : (newJob.workingHours.weekend || '0AM-0AM')
       },
       minimumSalary: newJob.minimumSalary,
       experienceRequired: newJob.experienceRequired || 'No experience needed',
       trainingProvided: newJob.trainingProvided || 'Training will be provided',
-      requiredSkills: newJob.requiredSkills
+      requiredSkills: newJob.requiredSkills,
+      status: 'pending' // New jobs start as pending
     };
 
     try {
       const createdJob = await apiService.createJob(job);
-      // Add applications count for display consistency
-      const jobWithApplications = { ...createdJob, applications: 0 };
+      // Add applications count and status for display consistency
+      const jobWithApplications = { 
+        ...createdJob, 
+        applications: 0,
+        status: 'pending' // Ensure new jobs show as pending
+      };
       setJobs(prev => [jobWithApplications, ...prev]);
     } catch (error) {
       console.error('Error creating job:', error);
@@ -975,13 +1294,14 @@ function EmployerHomeContent() {
       title: '', 
       jobType: '', 
       location: '', 
-      workingHours: { weekday: '', weekend: '' },
+      workingHours: { weekday: '8AM-5PM', weekend: '0AM-0AM' },
       minimumSalary: '', 
       experienceRequired: '', 
       trainingProvided: '', 
       requiredSkills: ['Basic English'],
       description: '' 
     });
+    setIsWeekendOff(false);
     setIsPostJobModalVisible(false);
     Alert.alert('Success', 'Job posted successfully!');
   };
@@ -1120,11 +1440,13 @@ function EmployerHomeContent() {
 
           <View style={styles.modalContent}>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, titleError && styles.inputError]}
               placeholder="Job Title *"
               value={newJob.title}
-              onChangeText={(text) => setNewJob(prev => ({ ...prev, title: text }))}
+              onChangeText={handleTitleChange}
+              onBlur={handleTitleBlur}
             />
+            {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
             
             {/* Job Category Dropdown */}
             <TouchableOpacity
@@ -1138,44 +1460,103 @@ function EmployerHomeContent() {
             </TouchableOpacity>
 
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, locationError && styles.inputError]}
               placeholder="Location *"
               value={newJob.location}
-              onChangeText={(text) => setNewJob(prev => ({ ...prev, location: text }))}
+              onChangeText={handleLocationChange}
+              onBlur={handleLocationBlur}
             />
+            {locationError ? <Text style={styles.errorText}>{locationError}</Text> : null}
             
             {/* Working Hours */}
             <Text style={styles.sectionLabel}>Working Hours</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Weekday Hours (e.g. 9:00 AM - 5:00 PM)"
-              value={newJob.workingHours.weekday}
-              onChangeText={(text) => setNewJob(prev => ({ 
-                ...prev, 
-                workingHours: { ...prev.workingHours, weekday: text }
-              }))}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Weekend Hours (e.g. 10:00 AM - 4:00 PM or Off)"
-              value={newJob.workingHours.weekend}
-              onChangeText={(text) => setNewJob(prev => ({ 
-                ...prev, 
-                workingHours: { ...prev.workingHours, weekend: text }
-              }))}
-            />
+            
+            {/* Weekday Hours */}
+            <View style={styles.hoursContainer}>
+              <Text style={styles.hoursLabel}>Weekday Hours:</Text>
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownLabel}>From:</Text>
+                <TouchableOpacity 
+                  style={styles.dropdown}
+                  onPress={() => openNumberPicker('weekday', 'start')}
+                >
+                  <Text style={styles.dropdownText}>
+                    {newJob.workingHours.weekday.split('-')[0] || '8AM'}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.dropdownLabel}>To:</Text>
+                <TouchableOpacity 
+                  style={styles.dropdown}
+                  onPress={() => openNumberPicker('weekday', 'end')}
+                >
+                  <Text style={styles.dropdownText}>
+                    {newJob.workingHours.weekday.split('-')[1] || '5PM'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Weekend Hours */}
+            <View style={styles.hoursContainer}>
+              <Text style={styles.hoursLabel}>Weekend Hours:</Text>
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownLabel}>From:</Text>
+                <TouchableOpacity 
+                  style={[styles.dropdown, isWeekendOff && styles.disabledDropdown]}
+                  onPress={() => openNumberPicker('weekend', 'start')}
+                  disabled={isWeekendOff}
+                >
+                  <Text style={[styles.dropdownText, isWeekendOff && styles.disabledText]}>
+                    {isWeekendOff ? 'Off' : (newJob.workingHours.weekend.split('-')[0] || '0AM')}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.dropdownLabel}>To:</Text>
+                <TouchableOpacity 
+                  style={[styles.dropdown, isWeekendOff && styles.disabledDropdown]}
+                  onPress={() => openNumberPicker('weekend', 'end')}
+                  disabled={isWeekendOff}
+                >
+                  <Text style={[styles.dropdownText, isWeekendOff && styles.disabledText]}>
+                    {isWeekendOff ? 'Off' : (newJob.workingHours.weekend.split('-')[1] || '0AM')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.offButton, isWeekendOff && styles.offButtonActive]}
+                  onPress={() => {
+                    setIsWeekendOff(!isWeekendOff);
+                    if (!isWeekendOff) {
+                      setNewJob(prev => ({ 
+                        ...prev, 
+                        workingHours: { ...prev.workingHours, weekend: 'Off' }
+                      }));
+                    } else {
+                      setNewJob(prev => ({ 
+                        ...prev, 
+                        workingHours: { ...prev.workingHours, weekend: '0AM-0AM' }
+                      }));
+                    }
+                  }}
+                >
+                  <Text style={[styles.offButtonText, isWeekendOff && styles.offButtonTextActive]}>
+                    Off
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
             
             <View style={styles.salaryContainer}>
               <Text style={styles.salaryPrefix}>$</Text>
               <TextInput
-                style={styles.salaryInput}
+                style={[styles.salaryInput, salaryError && styles.inputError]}
                 placeholder="15-18"
                 value={newJob.minimumSalary}
-                onChangeText={(text) => setNewJob(prev => ({ ...prev, minimumSalary: text }))}
+                onChangeText={handleSalaryChange}
+                onBlur={handleSalaryBlur}
                 keyboardType="numeric"
               />
               <Text style={styles.salarySuffix}>per hour *</Text>
             </View>
+            {salaryError ? <Text style={styles.errorText}>{salaryError}</Text> : null}
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
               placeholder="Job Description"
@@ -1294,6 +1675,91 @@ function EmployerHomeContent() {
                 )}
               </TouchableOpacity>
             ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Number Picker Modal */}
+      <Modal
+        visible={isNumberPickerVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setIsNumberPickerVisible(false)}>
+              <Text style={styles.modalCancelButton}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>
+              Select {currentPicker?.field === 'start' ? 'Start' : 'End'} Time
+            </Text>
+            <View style={{ width: 60 }} />
+          </View>
+
+          <View style={styles.numberPickerContent}>
+            <View style={styles.timeDisplay}>
+              <Text style={styles.timeDisplayText}>
+                {selectedTime.hour}{selectedTime.period}
+              </Text>
+            </View>
+            
+            <View style={styles.numberGrid}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((number) => (
+                <TouchableOpacity
+                  key={number}
+                  style={[
+                    styles.numberButton,
+                    selectedTime.hour === number && styles.selectedNumberButton
+                  ]}
+                  onPress={() => selectNumber(number)}
+                >
+                  <Text style={[
+                    styles.numberButtonText,
+                    selectedTime.hour === number && styles.selectedNumberButtonText
+                  ]}>
+                    {number}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            
+            <View style={styles.periodSelector}>
+              <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  selectedTime.period === 'AM' && styles.selectedPeriodButton
+                ]}
+                onPress={() => selectPeriod('AM')}
+              >
+                <Text style={[
+                  styles.periodButtonText,
+                  selectedTime.period === 'AM' && styles.selectedPeriodButtonText
+                ]}>
+                  AM
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  selectedTime.period === 'PM' && styles.selectedPeriodButton
+                ]}
+                onPress={() => selectPeriod('PM')}
+              >
+                <Text style={[
+                  styles.periodButtonText,
+                  selectedTime.period === 'PM' && styles.selectedPeriodButtonText
+                ]}>
+                  PM
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={confirmTimeSelection}
+            >
+              <Text style={styles.confirmButtonText}>Confirm</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
