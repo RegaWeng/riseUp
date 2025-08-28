@@ -63,7 +63,7 @@ function UserHomeContent() {
           trainingProvided: job.trainingProvided,
           workingHours: job.workingHours,
           noExperienceNeeded: job.experienceRequired === "No experience needed",
-          status: job.status || 'approved' // Default existing jobs to approved
+          status: job.approvalStatus === 'preparing' && job.company === 'Your Company' ? 'pending' : 'approved' // Only new jobs from "Your Company" are pending, predefined jobs are approved
         }));
         setJobs(transformedJobs);
       } catch (error) {
@@ -216,6 +216,13 @@ function UserHomeContent() {
               onPress={() => handleWithdraw(item.id, item.title)}
             >
               <Text style={styles.withdrawButtonText}>Withdraw</Text>
+            </TouchableOpacity>
+          ) : item.status === 'pending' ? (
+            <TouchableOpacity 
+              style={styles.disabledButton}
+              disabled={true}
+            >
+              <Text style={styles.disabledButtonText}>Pending Approval</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity 
@@ -1018,6 +1025,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
+  disabledButton: {
+    backgroundColor: '#ccc',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    opacity: 0.6,
+  },
+  disabledButtonText: {
+    color: '#666',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 // Employer home content (job posting)
@@ -1273,7 +1293,7 @@ function EmployerHomeContent() {
       experienceRequired: newJob.experienceRequired || 'No experience needed',
       trainingProvided: newJob.trainingProvided || 'Training will be provided',
       requiredSkills: newJob.requiredSkills,
-      status: 'pending' // New jobs start as pending
+      approvalStatus: 'preparing' // New jobs start as preparing (pending)
     };
 
     try {
@@ -1282,7 +1302,7 @@ function EmployerHomeContent() {
       const jobWithApplications = { 
         ...createdJob, 
         applications: 0,
-        status: 'pending' // Ensure new jobs show as pending
+        status: createdJob.approvalStatus === 'preparing' ? 'pending' : 'approved' // Map backend status to frontend status
       };
       setJobs(prev => [jobWithApplications, ...prev]);
     } catch (error) {
