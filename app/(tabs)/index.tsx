@@ -533,6 +533,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  jobHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  editButton: {
+    backgroundColor: '#007AFF',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButtonText: {
+    fontSize: 14,
+  },
   deleteButton: {
     backgroundColor: '#FF3B30',
     width: 28,
@@ -846,6 +862,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  removeSkillButton: {
+    color: '#FF3B30',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
   disabledItem: {
     opacity: 0.5,
   },
@@ -1095,6 +1117,8 @@ function EmployerHomeContent() {
   }, []);
   
   const [isPostJobModalVisible, setIsPostJobModalVisible] = useState(false);
+  const [isEditJobModalVisible, setIsEditJobModalVisible] = useState(false);
+  const [editingJob, setEditingJob] = useState<any>(null);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [isSkillsModalVisible, setIsSkillsModalVisible] = useState(false);
   
@@ -1281,6 +1305,76 @@ function EmployerHomeContent() {
     setCurrentPicker(null);
   };
 
+  const handleUpdateJob = async () => {
+    if (!editingJob) return;
+
+    // Validate all required fields
+    const titleValidation = validateJobTitle(newJob.title);
+    if (!titleValidation.isValid) {
+      setTitleError(titleValidation.message || '');
+      return;
+    }
+
+    const locationValidation = validateLocation(newJob.location);
+    if (!locationValidation.isValid) {
+      setLocationError(locationValidation.message || '');
+      return;
+    }
+
+    const salaryValidation = validateSalary(newJob.minimumSalary);
+    if (!salaryValidation.isValid) {
+      setSalaryError(salaryValidation.message || '');
+      return;
+    }
+
+    if (!newJob.jobType) {
+      Alert.alert('Error', 'Please select a job category');
+      return;
+    }
+
+    const job = {
+      title: newJob.title,
+      company: 'Your Company',
+      jobType: newJob.jobType || 'Other',
+      location: newJob.location,
+      workingHours: {
+        weekday: newJob.workingHours.weekday || '8AM-5PM',
+        weekend: isWeekendOff ? 'Off' : (newJob.workingHours.weekend || '0AM-0AM')
+      },
+      minimumSalary: newJob.minimumSalary,
+      experienceRequired: newJob.experienceRequired || 'No experience needed',
+      trainingProvided: newJob.trainingProvided || 'Training will be provided',
+      requiredSkills: newJob.requiredSkills,
+      approvalStatus: 'active' // Keep as active when editing
+    };
+
+    try {
+      const updatedJob = await apiService.updateJob(editingJob._id, job);
+      setJobs(prev => prev.map(job => job._id === editingJob._id ? updatedJob : job));
+      Alert.alert('Success', 'Job updated successfully!');
+    } catch (error) {
+      console.error('Error updating job:', error);
+      Alert.alert('Error', 'Failed to update job');
+      return;
+    }
+
+    // Reset form
+    setNewJob({ 
+      title: '', 
+      jobType: '', 
+      location: '', 
+      workingHours: { weekday: '8AM-5PM', weekend: '0AM-0AM' },
+      minimumSalary: '', 
+      experienceRequired: '', 
+      trainingProvided: '', 
+      requiredSkills: ['Basic English'],
+      description: '' 
+    });
+    setIsWeekendOff(false);
+    setEditingJob(null);
+    setIsEditJobModalVisible(false);
+  };
+
   const handlePostJob = async () => {
     // Validate all required fields
     const titleValidation = validateJobTitle(newJob.title);
@@ -1352,6 +1446,69 @@ function EmployerHomeContent() {
     Alert.alert('Success', 'Job posted successfully!');
   };
 
+  const convertWorkingHours = (hours: string) => {
+    if (!hours || hours === 'Off') return '0AM-0AM';
+    
+    // Handle different formats from database
+    if (hours.includes('From') && hours.includes('to')) {
+      // Format: "From 6 to 2" -> "6AM-2PM"
+      const match = hours.match(/From (\d+) to (\d+)/);
+      if (match) {
+        const start = parseInt(match[1]);
+        const end = parseInt(match[2]);
+        return `${start}AM-${end}PM`;
+      }
+    }
+    
+    if (hours.includes('~')) {
+      // Format: "9~5" -> "9AM-5PM"
+      const parts = hours.split('~');
+      if (parts.length === 2) {
+        return `${parts[0]}AM-${parts[1]}PM`;
+      }
+    }
+    
+    if (hours.includes('-')) {
+      // Format: "8AM-5PM" -> keep as is
+      return hours;
+    }
+    
+    // Single number format: "8" -> "8AM-5PM"
+    const num = parseInt(hours);
+    if (!isNaN(num)) {
+      return `${num}AM-5PM`;
+    }
+    
+    // Default fallback
+    return '8AM-5PM';
+  };
+
+  const handleEditJob = (job: any) => {
+    setEditingJob(job);
+    
+    // Convert working hours to the expected format
+    const convertedWorkingHours = {
+      weekday: convertWorkingHours(job.workingHours.weekday),
+      weekend: convertWorkingHours(job.workingHours.weekend)
+    };
+    
+    // Pre-fill the form with existing job data
+    setNewJob({
+      title: job.title,
+      jobType: job.jobType,
+      location: job.location,
+      workingHours: convertedWorkingHours,
+      minimumSalary: job.minimumSalary,
+      experienceRequired: job.experienceRequired,
+      trainingProvided: job.trainingProvided,
+      requiredSkills: job.requiredSkills,
+      description: ''
+    });
+    // Set weekend off state based on current data
+    setIsWeekendOff(job.workingHours.weekend === 'Off');
+    setIsEditJobModalVisible(true);
+  };
+
   const handleDeleteJob = (jobId: string, jobTitle: string) => {
     Alert.alert(
       'Delete Job',
@@ -1379,12 +1536,20 @@ function EmployerHomeContent() {
     <View style={styles.jobCard}>
       <View style={styles.jobHeader}>
         <Text style={styles.jobTitle}>{item.title}</Text>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDeleteJob(item._id, item.title)}
-        >
-          <Text style={styles.deleteButtonText}>✕</Text>
-        </TouchableOpacity>
+        <View style={styles.jobHeaderActions}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => handleEditJob(item)}
+          >
+            <Text style={styles.editButtonText}>✏️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteJob(item._id, item.title)}
+          >
+            <Text style={styles.deleteButtonText}>✕</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       
       <Text style={styles.company}>{item.company}</Text>
@@ -1641,6 +1806,175 @@ function EmployerHomeContent() {
                 {newJob.requiredSkills.map((skill, index) => (
                   <View key={index} style={styles.selectedSkillTag}>
                     <Text style={styles.selectedSkillText}>{skill}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Job Modal */}
+      <Modal
+        visible={isEditJobModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setIsEditJobModalVisible(false)}>
+              <Text style={styles.modalCancelButton}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Edit Job</Text>
+            <TouchableOpacity onPress={handleUpdateJob}>
+              <Text style={styles.modalPostButton}>Update</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            <TextInput
+              style={[styles.modalInput, titleError && styles.inputError]}
+              placeholder="Job Title *"
+              value={newJob.title}
+              onChangeText={handleTitleChange}
+              onBlur={handleTitleBlur}
+            />
+            {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+            
+            {/* Job Category Dropdown */}
+            <TouchableOpacity
+              style={[styles.modalInput, styles.dropdownButton]}
+              onPress={() => setIsCategoryModalVisible(true)}
+            >
+              <Text style={[styles.dropdownText, !newJob.jobType && styles.placeholderText]}>
+                {newJob.jobType || 'Select Job Category *'}
+              </Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+
+            <TextInput
+              style={[styles.modalInput, locationError && styles.inputError]}
+              placeholder="Location *"
+              value={newJob.location}
+              onChangeText={handleLocationChange}
+              onBlur={handleLocationBlur}
+            />
+            {locationError ? <Text style={styles.errorText}>{locationError}</Text> : null}
+
+            {/* Working Hours */}
+            <Text style={styles.sectionLabel}>Working Hours</Text>
+            
+            {/* Weekday Hours */}
+            <View style={styles.hoursContainer}>
+              <Text style={styles.hoursLabel}>Weekday Hours:</Text>
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownLabel}>From:</Text>
+                <TouchableOpacity 
+                  style={styles.dropdown}
+                  onPress={() => openNumberPicker('weekday', 'start')}
+                >
+                  <Text style={styles.dropdownText}>
+                    {newJob.workingHours.weekday.split('-')[0] || '8AM'}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.dropdownLabel}>To:</Text>
+                <TouchableOpacity 
+                  style={styles.dropdown}
+                  onPress={() => openNumberPicker('weekday', 'end')}
+                >
+                  <Text style={styles.dropdownText}>
+                    {newJob.workingHours.weekday.split('-')[1] || '5PM'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Weekend Hours */}
+            <View style={styles.hoursContainer}>
+              <Text style={styles.hoursLabel}>Weekend Hours:</Text>
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownLabel}>From:</Text>
+                <TouchableOpacity 
+                  style={[styles.dropdown, isWeekendOff && styles.disabledDropdown]}
+                  onPress={() => openNumberPicker('weekend', 'start')}
+                  disabled={isWeekendOff}
+                >
+                  <Text style={[styles.dropdownText, isWeekendOff && styles.disabledText]}>
+                    {isWeekendOff ? 'Off' : (newJob.workingHours.weekend.split('-')[0] || '0AM')}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.dropdownLabel}>To:</Text>
+                <TouchableOpacity 
+                  style={[styles.dropdown, isWeekendOff && styles.disabledDropdown]}
+                  onPress={() => openNumberPicker('weekend', 'end')}
+                  disabled={isWeekendOff}
+                >
+                  <Text style={[styles.dropdownText, isWeekendOff && styles.disabledText]}>
+                    {isWeekendOff ? 'Off' : (newJob.workingHours.weekend.split('-')[1] || '0AM')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.offButton, isWeekendOff && styles.offButtonActive]}
+                onPress={() => setIsWeekendOff(!isWeekendOff)}
+              >
+                <Text style={[styles.offButtonText, isWeekendOff && styles.offButtonTextActive]}>
+                  {isWeekendOff ? 'Off' : 'On'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Salary */}
+            <Text style={styles.sectionLabel}>Salary</Text>
+            <View style={styles.salaryContainer}>
+              <Text style={styles.salaryPrefix}>$</Text>
+              <TextInput
+                style={[styles.salaryInput, salaryError && styles.inputError]}
+                placeholder="15-18"
+                value={newJob.minimumSalary}
+                onChangeText={handleSalaryChange}
+                onBlur={handleSalaryBlur}
+                keyboardType="numeric"
+              />
+              <Text style={styles.salarySuffix}>per hour *</Text>
+            </View>
+            {salaryError ? <Text style={styles.errorText}>{salaryError}</Text> : null}
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Job Description"
+              value={newJob.description}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, description: text }))}
+              multiline
+              numberOfLines={3}
+            />
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Training Provided"
+              value={newJob.trainingProvided}
+              onChangeText={(text) => setNewJob(prev => ({ ...prev, trainingProvided: text }))}
+            />
+
+            {/* Required Skills */}
+            <Text style={styles.sectionLabel}>Required Skills (Max 3)</Text>
+            <TouchableOpacity
+              style={[styles.modalInput, styles.dropdownButton]}
+              onPress={() => setIsSkillsModalVisible(true)}
+            >
+              <Text style={styles.dropdownText}>
+                {newJob.requiredSkills.length} skills selected
+              </Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+            {newJob.requiredSkills.length > 0 && (
+              <View style={styles.selectedSkillsContainer}>
+                {newJob.requiredSkills.map((skill: string, index: number) => (
+                  <View key={index} style={styles.selectedSkillTag}>
+                    <Text style={styles.selectedSkillText}>{skill}</Text>
+                    <TouchableOpacity onPress={() => handleSkillToggle(skill)}>
+                      <Text style={styles.removeSkillButton}>✕</Text>
+                    </TouchableOpacity>
                   </View>
                 ))}
               </View>
