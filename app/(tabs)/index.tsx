@@ -698,6 +698,32 @@ const styles = StyleSheet.create({
     padding: 4,
     marginTop: 8,
   },
+  adminTabContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+    padding: 4,
+    marginTop: 12,
+  },
+  adminTab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  activeAdminTab: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  adminTabText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  activeAdminTabText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
   toggleButton: {
     flex: 1,
     paddingVertical: 8,
@@ -1787,14 +1813,17 @@ function EmployerHomeContent() {
   );
 }
 
-// Admin approval content for pending jobs
+// Admin approval content for pending jobs and password reset requests
 function AdminApprovalContent() {
   const { user } = useAuth();
   const [pendingJobs, setPendingJobs] = useState<any[]>([]);
+  const [passwordResetRequests, setPasswordResetRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'jobs' | 'password-resets'>('jobs');
 
   useEffect(() => {
     fetchPendingJobs();
+    fetchPasswordResetRequests();
   }, []);
 
   const fetchPendingJobs = async () => {
@@ -1806,6 +1835,15 @@ function AdminApprovalContent() {
       console.error('Error fetching pending jobs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPasswordResetRequests = async () => {
+    try {
+      const requests = await apiService.getPasswordResetRequests();
+      setPasswordResetRequests(requests);
+    } catch (error) {
+      console.error('Error fetching password reset requests:', error);
     }
   };
 
@@ -1826,6 +1864,22 @@ function AdminApprovalContent() {
       fetchPendingJobs();
     } catch (error) {
       console.error('Error rejecting job:', error);
+    }
+  };
+
+  const handleApprovePasswordReset = async (requestId: string) => {
+    try {
+      const response = await apiService.approvePasswordReset(requestId);
+      Alert.alert(
+        'Password Reset Approved',
+        `Token: ${response.token}\n\nShare this token with the user so they can reset their password.`,
+        [{ text: 'OK' }]
+      );
+      // Refresh password reset requests
+      fetchPasswordResetRequests();
+    } catch (error) {
+      console.error('Error approving password reset:', error);
+      Alert.alert('Error', 'Failed to approve password reset request');
     }
   };
 
@@ -1865,32 +1919,93 @@ function AdminApprovalContent() {
     </View>
   );
 
+  const renderPasswordResetItem = ({ item }: { item: any }) => (
+    <View style={styles.jobCard}>
+      <View style={styles.jobHeader}>
+        <Text style={styles.jobTitle}>Password Reset Request</Text>
+        <View style={[styles.statusBadge, styles.preparingBadge]}>
+          <Text style={styles.statusBadge}>Pending</Text>
+        </View>
+      </View>
+      <Text style={styles.company}>Email: {item.email}</Text>
+      <Text style={styles.location}>
+        Requested: {new Date(item.requestedAt).toLocaleString()}
+      </Text>
+      
+      <View style={styles.adminActions}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.approveButton]}
+          onPress={() => handleApprovePasswordReset(item._id)}
+        >
+          <Text style={styles.actionButtonText}>✓ Approve</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <View style={[styles.statusSection, { backgroundColor: '#FF9500' }]}>
-        <Text style={[styles.subtitle, { color: 'white' }]}>Job Approval Queue</Text>
+        <Text style={[styles.subtitle, { color: 'white' }]}>Admin Approval Queue</Text>
         <Text style={[styles.stats, { color: 'rgba(255,255,255,0.8)' }]}>
-          {pendingJobs.length} jobs pending review
+          {pendingJobs.length} jobs, {passwordResetRequests.length} password resets pending
         </Text>
+        
+        {/* Tab Navigation */}
+        <View style={styles.adminTabContainer}>
+          <TouchableOpacity 
+            style={[styles.adminTab, activeTab === 'jobs' && styles.activeAdminTab]}
+            onPress={() => setActiveTab('jobs')}
+          >
+            <Text style={[styles.adminTabText, activeTab === 'jobs' && styles.activeAdminTabText]}>
+              Jobs ({pendingJobs.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.adminTab, activeTab === 'password-resets' && styles.activeAdminTab]}
+            onPress={() => setActiveTab('password-resets')}
+          >
+            <Text style={[styles.adminTabText, activeTab === 'password-resets' && styles.activeAdminTabText]}>
+              Password Resets ({passwordResetRequests.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <Text>Loading pending jobs...</Text>
+          <Text>Loading...</Text>
         </View>
-      ) : pendingJobs.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No jobs pending approval</Text>
-          <Text style={styles.emptyText}>Create a job as employer first, then it will appear here</Text>
-        </View>
+      ) : activeTab === 'jobs' ? (
+        pendingJobs.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No jobs pending approval</Text>
+            <Text style={styles.emptyText}>Create a job as employer first, then it will appear here</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={pendingJobs}
+            renderItem={renderPendingJobItem}
+            keyExtractor={(item) => item._id}
+            style={styles.jobList}
+            showsVerticalScrollIndicator={false}
+          />
+        )
       ) : (
-        <FlatList
-          data={pendingJobs}
-          renderItem={renderPendingJobItem}
-          keyExtractor={(item) => item._id}
-          style={styles.jobList}
-          showsVerticalScrollIndicator={false}
-        />
+        passwordResetRequests.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No password reset requests pending</Text>
+            <Text style={styles.emptyText}>Users can request password resets from the login page</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={passwordResetRequests}
+            renderItem={renderPasswordResetItem}
+            keyExtractor={(item) => item._id}
+            style={styles.jobList}
+            showsVerticalScrollIndicator={false}
+          />
+        )
       )}
     </View>
   );

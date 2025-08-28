@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useAdmin } from '../../context/AdminContext';
 import { useAuth } from '../../context/AuthContext';
 import { TRAINING_DATA, useSaved } from "../../context/SavedContext";
 import { apiService, Application } from '../../services/api';
@@ -15,18 +16,20 @@ const SKILL_CATEGORIES = [
 
 export default function TrainingScreen() {
   const { user } = useAuth();
+  const { isAdminView, viewMode, setViewMode } = useAdmin();
   
-  // Show different content based on user type
-  if (user?.type === 'employer') {
+  // Show different content based on user type and admin view
+  if (user?.type === 'employer' || (isAdminView && viewMode === 'employer')) {
     return <EmployerTrainingContent />;
   }
   
-  // Default training videos for regular users
+  // Default training videos for regular users and admin in user view
   return <UserTrainingContent />;
 }
 
 // User training content (original training videos)
 function UserTrainingContent() {
+  const { isAdminView, viewMode, setViewMode } = useAdmin();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   
   // Use shared context for everything
@@ -193,6 +196,40 @@ function UserTrainingContent() {
 
   return (
     <View style={styles.container}>
+      {/* Admin Toggle - Only show for admin users */}
+      {isAdminView && (
+        <View style={styles.adminToggleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.adminToggle,
+              viewMode === 'user' && styles.adminToggleActive
+            ]}
+            onPress={() => setViewMode('user')}
+          >
+            <Text style={[
+              styles.adminToggleText,
+              viewMode === 'user' && styles.adminToggleTextActive
+            ]}>
+              User View
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.adminToggle,
+              viewMode === 'employer' && styles.adminToggleActive
+            ]}
+            onPress={() => setViewMode('employer')}
+          >
+            <Text style={[
+              styles.adminToggleText,
+              viewMode === 'employer' && styles.adminToggleTextActive
+            ]}>
+              Employer View
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Status Section - Small like home page */}
       <View style={[styles.statusSection, { backgroundColor: '#34C759' }]}>
         <Text style={[styles.subtitle, { color: 'white' }]}>Build skills for better opportunities</Text>
@@ -226,6 +263,7 @@ function UserTrainingContent() {
 
 // Employer training content (shows job applicants)
 function EmployerTrainingContent() {
+  const { isAdminView, viewMode, setViewMode } = useAdmin();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
@@ -382,6 +420,40 @@ function EmployerTrainingContent() {
 
   return (
     <View style={styles.container}>
+      {/* Admin Toggle - Only show for admin users */}
+      {isAdminView && (
+        <View style={styles.adminToggleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.adminToggle,
+              viewMode === 'user' && styles.adminToggleActive
+            ]}
+            onPress={() => setViewMode('user')}
+          >
+            <Text style={[
+              styles.adminToggleText,
+              viewMode === 'user' && styles.adminToggleTextActive
+            ]}>
+              User View
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.adminToggle,
+              viewMode === 'employer' && styles.adminToggleActive
+            ]}
+            onPress={() => setViewMode('employer')}
+          >
+            <Text style={[
+              styles.adminToggleText,
+              viewMode === 'employer' && styles.adminToggleTextActive
+            ]}>
+              Employer View
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Status Section */}
       <View style={[styles.statusSection, { backgroundColor: '#34C759' }]}>
         <Text style={[styles.subtitle, { color: 'white' }]}>Job Applications Management</Text>
@@ -421,6 +493,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  adminToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 8,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  adminToggle: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  adminToggleActive: {
+    backgroundColor: '#34C759',
+  },
+  adminToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  adminToggleTextActive: {
+    color: 'white',
   },
   statusSection: {
     paddingTop: 20,

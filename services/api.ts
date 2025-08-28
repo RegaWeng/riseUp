@@ -266,6 +266,31 @@ class ApiService {
   async getPendingJobs(): Promise<Job[]> {
     return this.request<Job[]>('/jobs/pending');
   }
+
+  // Password Reset API
+  async requestPasswordReset(email: string): Promise<{ message: string; token: string }> {
+    return this.request<{ message: string; token: string }>('/users/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async getPasswordResetRequests(): Promise<any[]> {
+    return this.request<any[]>('/users/password-reset-requests');
+  }
+
+  async approvePasswordReset(requestId: string): Promise<{ message: string; token: string }> {
+    return this.request<{ message: string; token: string }>(`/users/approve-password-reset/${requestId}`, {
+      method: 'PUT',
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/users/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
 }
 
 export const apiService = new ApiService();

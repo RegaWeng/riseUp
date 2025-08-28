@@ -48,6 +48,10 @@ export default function TabLayout() {
           paddingBottom: 34,
           paddingTop: 8,
         },
+        tabBarShowLabel: true,
+        tabBarIconStyle: {
+          marginTop: 4,
+        },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
@@ -60,8 +64,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size || 24} color={color} />
           ),
         }}
       />
@@ -69,8 +73,8 @@ export default function TabLayout() {
         name="training"
         options={{
           title: 'Training',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'play-circle' : 'play-circle-outline'} size={24} color={color} />
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'play-circle' : 'play-circle-outline'} size={size || 24} color={color} />
           ),
         }}
       />
@@ -78,8 +82,8 @@ export default function TabLayout() {
         name="saved"
         options={{
           title: 'Saved',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'bookmark' : 'bookmark-outline'} size={24} color={color} />
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'bookmark' : 'bookmark-outline'} size={size || 24} color={color} />
           ),
         }}
       />
@@ -87,8 +91,8 @@ export default function TabLayout() {
         name="location"
         options={{
           title: 'Location',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'location' : 'location-outline'} size={24} color={color} />
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'location' : 'location-outline'} size={size || 24} color={color} />
           ),
         }}
       />
@@ -96,8 +100,8 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size || 24} color={color} />
           ),
         }}
       />
