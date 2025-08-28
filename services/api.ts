@@ -1,6 +1,6 @@
 
 // For real device testing, use your PC's IP address
-const API_BASE_URL = 'http://192.168.0.207:3000/api';
+const API_BASE_URL = 'http://192.168.0.32:3000/api';
 
 // Types
 export interface Job {

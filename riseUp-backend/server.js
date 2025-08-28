@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 const jobRoutes = require('./routes/jobs');
 const savedPostsRoutes = require('./routes/savedPosts');
@@ -22,7 +22,7 @@ app.use('/api/videos', videosRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/applications', applicationRoutes);
 
-app.get('/test', (req, res) => {
+app.get('/api/test', (req, res) => {
   res.json({ message: "Backend server is working!" });
 });
 
