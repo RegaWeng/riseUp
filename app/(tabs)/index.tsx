@@ -5,10 +5,6 @@ import { useSaved } from '../../context/SavedContext';
 import { apiService } from '../../services/api';
 import { validateJobTitle, validateLocation, validateSalary } from '../../utils/validation';
 
-
-
-// Jobs will be fetched from API
-
 export default function HomeScreen() {
   const { user } = useAuth();
   
@@ -141,8 +137,6 @@ function UserHomeContent() {
     }
     // When turning OFF "No skills required", leave "No experience needed" unchanged
   };
-
-
 
   // Calculate counts for status display
   const applicationCount = appliedJobs.length;
