@@ -30,6 +30,7 @@ function UserHomeContent() {
   const [searchText, setSearchText] = useState("");
   const [removedJobs, setRemovedJobs] = useState<string[]>([]);
   const [showNoExperienceOnly, setShowNoExperienceOnly] = useState(false);
+  const [showNoSkillsOnly, setShowNoSkillsOnly] = useState(false);
   const [jobs, setJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -63,6 +64,7 @@ function UserHomeContent() {
           trainingProvided: job.trainingProvided,
           workingHours: job.workingHours,
           noExperienceNeeded: job.experienceRequired === "No experience needed",
+          noSkillsRequired: job.requiredSkills.length === 1 && job.requiredSkills[0] === "Basic English",
           status: job.approvalStatus === 'preparing' && job.company === 'Your Company' ? 'pending' : 'approved' // Only new jobs from "Your Company" are pending, predefined jobs are approved
         }));
         setJobs(transformedJobs);
@@ -77,13 +79,14 @@ function UserHomeContent() {
     fetchJobs();
   }, []);
 
-  // Filter jobs based on search text, no-experience filter, approval status, and exclude removed jobs
+  // Filter jobs based on search text, no-experience filter, no-skills filter, approval status, and exclude removed jobs
   const filteredJobs = jobs.filter(job => 
     !removedJobs.includes(job.id) && // Don't show removed jobs
     (job.title.toLowerCase().includes(searchText.toLowerCase()) ||
     job.company.toLowerCase().includes(searchText.toLowerCase()) ||
     job.skills.some((skill: string) => skill.toLowerCase().includes(searchText.toLowerCase()))) &&
     (!showNoExperienceOnly || job.noExperienceNeeded) && // Show only no-experience jobs when filter is on
+    (!showNoSkillsOnly || job.noSkillsRequired) && // Show only no-skills jobs when filter is on
     true // TODO: Add user role check for approval status
   );
 
@@ -125,6 +128,18 @@ function UserHomeContent() {
       unsaveJob(jobId);
     }
     console.log(`Job removed: ${jobTitle}`);
+  };
+
+  // Handle "No skills required" filter toggle
+  const handleNoSkillsToggle = () => {
+    const newShowNoSkillsOnly = !showNoSkillsOnly;
+    setShowNoSkillsOnly(newShowNoSkillsOnly);
+    
+    // When turning ON "No skills required", automatically enable "No experience needed"
+    if (newShowNoSkillsOnly && !showNoExperienceOnly) {
+      setShowNoExperienceOnly(true);
+    }
+    // When turning OFF "No skills required", leave "No experience needed" unchanged
   };
 
 
@@ -258,22 +273,39 @@ function UserHomeContent() {
         />
       </View>
 
-      {/* Filter Toggle */}
+      {/* Filter Toggles */}
       <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterToggle,
-            showNoExperienceOnly && styles.filterToggleActive
-          ]}
-          onPress={() => setShowNoExperienceOnly(!showNoExperienceOnly)}
-        >
-          <Text style={[
-            styles.filterToggleText,
-            showNoExperienceOnly && styles.filterToggleTextActive
-          ]}>
-            ✨ No experience needed
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[
+              styles.filterToggle,
+              showNoExperienceOnly && styles.filterToggleActive
+            ]}
+            onPress={() => setShowNoExperienceOnly(!showNoExperienceOnly)}
+          >
+            <Text style={[
+              styles.filterToggleText,
+              showNoExperienceOnly && styles.filterToggleTextActive
+            ]}>
+              ✨ No experience needed
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.filterToggle,
+              showNoSkillsOnly && styles.filterToggleActive
+            ]}
+            onPress={handleNoSkillsToggle}
+          >
+            <Text style={[
+              styles.filterToggleText,
+              showNoSkillsOnly && styles.filterToggleTextActive
+            ]}>
+              🎯 No skills required
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Job List */}
@@ -328,6 +360,11 @@ const styles = StyleSheet.create({
   filterContainer: {
     paddingHorizontal: 20,
     paddingVertical: 10,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   filterToggle: {
     backgroundColor: 'white',
